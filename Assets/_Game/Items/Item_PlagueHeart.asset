@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f703d999eb575c34386485e2f9b2e9ea, type: 3}
+  m_Name: Item_PlagueHeart
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Items.ItemDefinition
+  displayName: "\uC5ED\uBCD1\uC758 \uC2EC\uC7A5"
+  description: "\uC544\uC9C1 \uB6F4\uB2E4. \uB4E4\uACE0 \uC788\uC73C\uBA74 \uC18C\uB9AC\uAC00
+    \uB4E4\uB9B0\uB2E4."
+  icon: {fileID: 21300000, guid: f8a2e7cdaff345a42b633520e261868d, type: 3}
+  grade: 3
+  gridWidth: 2
+  gridHeight: 2
+  value: 900
+  weight: 2.5
+  stackable: 0
+  maxStack: 1
