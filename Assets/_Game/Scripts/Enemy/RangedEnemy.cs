@@ -47,20 +47,24 @@ namespace Capstone.Enemy
 
             if (State != AlertState.Alerted)
             {
-                if (State == AlertState.Suspicious) MoveToward(Player.position, 0.4f);
+                if (State == AlertState.Suspicious) MoveAlongPathTo(ChaseTarget, 0.4f);
                 else Stop();
                 return;
             }
 
+            // 쏠 자리가 안 나오면 사거리 유지보다 시야 확보가 먼저다.
+            // 벽 뒤에서 거리만 맞춰 놓고 벽에 대고 겨누는 게 예전 동작이었다
+            if (!CanSeePlayer) { MoveAlongPathTo(ChaseTarget); return; }
+
             // 거리 관리
             if (DistanceToPlayer < retreatRange)
             {
-                Vector2 away = (Vector2)transform.position - (Vector2)Player.position;
-                MoveToward((Vector2)transform.position + away.normalized, 0.9f);
+                Vector2 away = ((Vector2)transform.position - (Vector2)Player.position).normalized;
+                MoveAwayFrom(away, 0.9f);
             }
             else if (DistanceToPlayer > preferredRange + rangeTolerance)
             {
-                MoveToward(Player.position);
+                MoveAlongPathTo(Player.position);
             }
             else
             {
@@ -69,9 +73,29 @@ namespace Capstone.Enemy
             }
         }
 
+        /// <summary>물러날 때 벽에 등을 비비지 않도록, 막히면 벽을 따라 옆으로 빠진다.</summary>
+        private void MoveAwayFrom(Vector2 away, float speedMultiplier)
+        {
+            Vector2 spot = Position + away * 2f;
+            if (HasClearPath(Position, spot)) { MoveToward(spot, speedMultiplier); return; }
+
+            // 뒤가 막혔으면 옆으로. 두 방향 중 더 트인 쪽을 고른다
+            Vector2 left = Vector2.Perpendicular(away);
+            Vector2 right = -left;
+            bool leftOpen = HasClearPath(Position, Position + left * 2f);
+            bool rightOpen = HasClearPath(Position, Position + right * 2f);
+
+            if (!leftOpen && !rightOpen) { Stop(); return; }
+            Vector2 pick = leftOpen && rightOpen
+                ? (Random.value < 0.5f ? left : right)
+                : (leftOpen ? left : right);
+            MoveToward(Position + pick * 2f, speedMultiplier);
+        }
+
         private void TryStartAim()
         {
             if (Time.time < _nextFireAt) return;
+            if (!CanSeePlayer) return;                       // 벽에 대고 겨누지 않는다
             _aimSnapshot = Player.position;                  // 조준 시작 시점의 위치를 기억
             _fireAt = Time.time + aimTime;
             _nextFireAt = Time.time + fireCooldown + aimTime;
@@ -83,6 +107,10 @@ namespace Capstone.Enemy
             if (!projectilePrefab) return;
 
             Vector2 origin = muzzle ? (Vector2)muzzle.position : (Vector2)transform.position;
+
+            // 겨누는 사이에 벽이 끼어들었으면 쏘지 않는다.
+            // 기억해 둔 자리로 쏘는 규칙은 그대로 두되, 총구에서 그 자리가 보일 때만이다
+            if (Physics2D.Linecast(origin, _aimSnapshot, sightBlockMask).collider != null) return;
             // 기억해둔 위치로 쏜다 - 움직이면 피할 수 있다
             Vector2 dir = (_aimSnapshot - origin).normalized;
             float offset = Random.Range(-spreadDegrees, spreadDegrees);

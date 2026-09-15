@@ -53,12 +53,13 @@ namespace Capstone.Enemy
             switch (State)
             {
                 case AlertState.Alerted:
-                    if (DistanceToPlayer <= attackRange) { Stop(); TryStartAttack(); }
-                    else MoveToward(Player.position);
+                    // 붙어 있어도 벽 너머면 때릴 수 없다. 돌아 들어가야 한다
+                    if (DistanceToPlayer <= attackRange && CanSeePlayer) { Stop(); TryStartAttack(); }
+                    else MoveAlongPathTo(ChaseTarget);
                     break;
 
                 case AlertState.Suspicious:
-                    MoveToward(Player.position, 0.5f);       // 확인하러 천천히 접근
+                    MoveAlongPathTo(ChaseTarget, 0.5f);      // 확인하러 천천히 접근
                     break;
 
                 default:
@@ -70,6 +71,7 @@ namespace Capstone.Enemy
         private void TryStartAttack()
         {
             if (Time.time < _nextAttackAt) return;
+            if (!CanSeePlayer) return;                       // 벽을 사이에 두고 휘두르지 않는다
 
             // 휘두를 방향을 예비 동작 시작 시점에 고정한다.
             // 이래야 플레이어가 옆으로 돌아 들어가 피할 수 있다.
@@ -90,6 +92,9 @@ namespace Capstone.Enemy
             // 예비 동작 사이에 벗어났으면 빗나간다
             if (toPlayer.magnitude > attackRange * 1.25f) return;
 
+            // 휘두르는 사이에 벽 뒤로 숨었으면 벽을 때린 것이다
+            if (!HasLineOfSightTo(Player.position)) return;
+
             // 앞쪽 부채꼴 밖이면 빗나간다. 옆이나 뒤로 돌아 들어가면 피할 수 있다.
             if (Vector2.Angle(_attackFacing, toPlayer) > attackArcDegrees * 0.5f) return;
 
@@ -102,12 +107,26 @@ namespace Capstone.Enemy
         {
             if (Time.time >= _nextWanderAt)
             {
-                _wanderTarget = _home + Random.insideUnitCircle * wanderRadius;
+                _wanderTarget = PickWanderTarget();
                 _nextWanderAt = Time.time + wanderInterval;
             }
 
             if (Vector2.Distance(transform.position, _wanderTarget) < 0.2f) Stop();
-            else MoveToward(_wanderTarget, 0.35f);
+            else MoveAlongPathTo(_wanderTarget, 0.35f);
+        }
+
+        /// <summary>
+        /// 벽 속을 찍지 않도록 몇 번 다시 뽑는다.
+        /// 예전에는 아무 데나 찍어 놓고 그쪽으로 밀기만 해서, 벽을 고르면 다음 갱신까지 비비고 있었다.
+        /// </summary>
+        private Vector2 PickWanderTarget()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                Vector2 candidate = _home + Random.insideUnitCircle * wanderRadius;
+                if (IsStandable(candidate)) return candidate;
+            }
+            return IsStandable(_home) ? _home : (Vector2)transform.position;
         }
     }
 }
