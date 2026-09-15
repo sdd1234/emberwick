@@ -33,12 +33,20 @@ namespace Capstone.Enemy
         [Header("길찾기")]
         [Tooltip("길을 막는 것으로 볼 레이어. 비우면 시야 차단 레이어를 그대로 쓴다")]
         [SerializeField] protected LayerMask obstacleMask;
-        [Tooltip("몸 반지름 (m). 벽에서 이만큼은 떨어져 다닌다")]
-        [SerializeField] protected float agentRadius = 0.28f;
+        [Tooltip("몸 반지름 (m). 길을 낼 때 벽에서 이만큼은 떨어뜨린다")]
+        [SerializeField] protected float agentRadius = 0.42f;
+        [Tooltip("벽이 이 거리 안으로 들어오면 밀려난다 (m). 어깨를 대고 비비지 않게 한다")]
+        [SerializeField] protected float wallClearance = 0.55f;
         [Tooltip("길을 다시 계산하는 간격 (초)")]
         [SerializeField] protected float repathInterval = 0.4f;
         [Tooltip("중간 지점에 이만큼 붙으면 지난 것으로 친다 (m)")]
         [SerializeField] protected float waypointReach = 0.4f;
+
+        [Header("끼임 탈출")]
+        [Tooltip("이 시간 동안 명령한 만큼 못 움직이면 끼인 것으로 본다 (초)")]
+        [SerializeField] protected float stuckGrace = 0.45f;
+        [Tooltip("끼였을 때 옆으로 빠져나가는 시간 (초)")]
+        [SerializeField] protected float unstickDuration = 0.5f;
 
         [Header("참조")]
         [SerializeField] protected SpriteRenderer spriteRenderer;
@@ -61,6 +69,12 @@ namespace Capstone.Enemy
         private float _nextRepathAt;
         private Vector2 _pathGoal;
         private LayerMask _obstacle;
+
+        // 끼임 감지
+        private Vector2 _stuckAnchor;
+        private float _stuckSince = -1f;
+        private float _unstickUntil;
+        private Vector2 _unstickDir;
 
         /// <summary>물리 기준 위치. 콜라이더가 발밑에 있어 transform 과 미세하게 다르다.</summary>
         protected Vector2 Position => Body != null ? Body.position : (Vector2)transform.position;
@@ -100,6 +114,7 @@ namespace Capstone.Enemy
         protected virtual void Update()
         {
             if (Player == null) return;
+            TrackProgress();              // Think 이 새 속도를 넣기 전에 지난 프레임 결과를 본다
             UpdateDetection();
             Think();
             FacePlayerIfAware();
@@ -177,7 +192,94 @@ namespace Capstone.Enemy
         protected void MoveToward(Vector2 target, float speedMultiplier = 1f)
         {
             Vector2 dir = (target - Position).normalized;
+
+            // 끼여 있는 동안에는 목표를 무시하고 빠져나오는 쪽으로 민다
+            if (Time.time < _unstickUntil) dir = _unstickDir;
+            else dir = AvoidWalls(dir);
+
             Body.linearVelocity = dir * moveSpeed * speedMultiplier;
+        }
+
+        /// <summary>
+        /// 벽으로 파고드는 속도 성분을 덜어낸다.
+        ///
+        /// 길찾기를 넣어도 "벽에 어깨를 대고 미는" 그림은 남는다. 경로 칸은 벽에서 몸 반지름만큼만
+        /// 떨어져 있고, 옆에서 다른 적이 밀거나 모퉁이를 크게 돌면 결국 벽에 닿는다.
+        /// 닿는 것 자체는 괜찮다. 문제는 벽 쪽으로 계속 미는 것이다 - 속도는 벽이 먹고
+        /// 남는 건 비비는 소리뿐이다. 그래서 (1) 벽을 파고드는 성분을 지우고
+        /// (2) 너무 붙었으면 살짝 떼어낸다. 벽을 따라가는 성분은 그대로 남으므로 속도는 안 죽는다.
+        /// </summary>
+        private Vector2 AvoidWalls(Vector2 dir)
+        {
+            if (_obstacle.value == 0 || dir.sqrMagnitude < 0.0001f) return dir;
+
+            var ahead = Physics2D.CircleCast(Position, agentRadius, dir, wallClearance, _obstacle);
+            if (ahead.collider != null)
+            {
+                float into = Vector2.Dot(dir, ahead.normal);
+                if (into < 0f)
+                {
+                    Vector2 slide = dir - ahead.normal * into;
+                    // 정면으로 부딪히면 접선 성분이 거의 없다. 그때는 원래 방향을 두고 밀어내기에 맡긴다
+                    if (slide.sqrMagnitude > 0.04f) dir = slide.normalized;
+                }
+            }
+
+            var near = Physics2D.OverlapCircle(Position, wallClearance, _obstacle);
+            if (near != null)
+            {
+                Vector2 push = Position - near.ClosestPoint(Position);
+                if (push.sqrMagnitude > 0.000001f) dir = (dir + push.normalized * 0.6f).normalized;
+            }
+            return dir;
+        }
+
+        /// <summary>
+        /// 명령한 만큼 실제로 움직였는지 본다.
+        ///
+        /// 길찾기를 넣어도 비비는 경우는 남는다 - 앞선 적이 길을 막았거나, 플레이어와 부딪혔거나,
+        /// 모퉁이에 어깨가 걸렸거나. 원인을 하나씩 다루는 대신 "밀고 있는데 안 나간다"는
+        /// 결과만 보고 옆으로 빼낸다. 어떤 이유로 끼든 여기서 풀린다.
+        /// </summary>
+        private void TrackProgress()
+        {
+            float commanded = Body.linearVelocity.magnitude;
+            if (commanded < 0.2f || Time.time < _unstickUntil)
+            {
+                _stuckSince = -1f;
+                _stuckAnchor = Position;
+                return;
+            }
+
+            if (_stuckSince < 0f) { _stuckSince = Time.time; _stuckAnchor = Position; return; }
+
+            float elapsed = Time.time - _stuckSince;
+            if (elapsed < stuckGrace) return;
+
+            // 명령 속도의 35% 도 못 냈으면 밀고만 있는 것이다
+            if (Vector2.Distance(Position, _stuckAnchor) < commanded * elapsed * 0.35f) BeginUnstick();
+
+            _stuckSince = -1f;
+            _stuckAnchor = Position;
+        }
+
+        private void BeginUnstick()
+        {
+            Vector2 dir = Body.linearVelocity.sqrMagnitude > 0.0001f ? Body.linearVelocity.normalized : Vector2.right;
+            Vector2 left = Vector2.Perpendicular(dir);
+            Vector2 right = -left;
+
+            bool leftOpen = HasClearPath(Position, Position + left * 1.2f);
+            bool rightOpen = HasClearPath(Position, Position + right * 1.2f);
+
+            if (leftOpen && rightOpen) _unstickDir = Random.value < 0.5f ? left : right;
+            else if (leftOpen) _unstickDir = left;
+            else if (rightOpen) _unstickDir = right;
+            else _unstickDir = -dir;                     // 양옆이 다 막혔으면 뒤로 뺀다
+
+            _unstickUntil = Time.time + unstickDuration;
+            _path.Clear();                               // 빠져나온 자리에서 길을 새로 잡는다
+            _nextRepathAt = 0f;
         }
 
         /// <summary>
@@ -250,6 +352,7 @@ namespace Capstone.Enemy
 
             Vector2 along = Vector2.Perpendicular(hit.normal);
             if (Vector2.Dot(along, dir) < 0f) along = -along;
+            if (Time.time < _unstickUntil) along = _unstickDir;      // 끼임 탈출이 우선이다
             Body.linearVelocity = along * moveSpeed * speedMultiplier;
         }
 

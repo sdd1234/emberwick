@@ -59,8 +59,12 @@ namespace Capstone.Enemy
             // 거리 관리
             if (DistanceToPlayer < retreatRange)
             {
+                // 붙었다고 물러나기만 하면 그냥 맞아준다.
+                // 물러나되 쏠 때가 되면 쏜다. 물러날 곳이 없으면 그 자리에서 쏜다
                 Vector2 away = ((Vector2)transform.position - (Vector2)Player.position).normalized;
-                MoveAwayFrom(away, 0.9f);
+                if (!MoveAwayFrom(away, 0.9f)) Stop();
+                TryStartAim();
+                return;
             }
             else if (DistanceToPlayer > preferredRange + rangeTolerance)
             {
@@ -73,23 +77,27 @@ namespace Capstone.Enemy
             }
         }
 
-        /// <summary>물러날 때 벽에 등을 비비지 않도록, 막히면 벽을 따라 옆으로 빠진다.</summary>
-        private void MoveAwayFrom(Vector2 away, float speedMultiplier)
+        /// <summary>
+        /// 물러난다. 갈 곳이 없으면 false 를 돌려주고 - 그때는 물러나는 시늉 대신 쏘는 게 낫다.
+        /// 뒤가 막혔는데도 계속 밀면 벽에 등을 대고 비비는 꼴이 된다.
+        /// </summary>
+        private bool MoveAwayFrom(Vector2 away, float speedMultiplier)
         {
             Vector2 spot = Position + away * 2f;
-            if (HasClearPath(Position, spot)) { MoveToward(spot, speedMultiplier); return; }
+            if (HasClearPath(Position, spot)) { MoveToward(spot, speedMultiplier); return true; }
 
-            // 뒤가 막혔으면 옆으로. 두 방향 중 더 트인 쪽을 고른다
+            // 뒤가 막혔으면 옆으로. 두 방향 중 트인 쪽을 고른다
             Vector2 left = Vector2.Perpendicular(away);
             Vector2 right = -left;
             bool leftOpen = HasClearPath(Position, Position + left * 2f);
             bool rightOpen = HasClearPath(Position, Position + right * 2f);
 
-            if (!leftOpen && !rightOpen) { Stop(); return; }
+            if (!leftOpen && !rightOpen) return false;
             Vector2 pick = leftOpen && rightOpen
                 ? (Random.value < 0.5f ? left : right)
                 : (leftOpen ? left : right);
             MoveToward(Position + pick * 2f, speedMultiplier);
+            return true;
         }
 
         private void TryStartAim()
