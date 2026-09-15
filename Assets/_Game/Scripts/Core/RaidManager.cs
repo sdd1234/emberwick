@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 namespace Capstone.Core
@@ -12,8 +13,6 @@ namespace Capstone.Core
     {
         [Header("플레이어")]
         [SerializeField] private GameObject player;
-        [Tooltip("리스폰 지점. 비우면 시작 위치를 쓴다")]
-        [SerializeField] private Transform spawnPoint;
 
         [Header("제한 시간 (기획서 6.5 - 레이드 20분)")]
         [SerializeField] private float raidMinutes = 20f;
@@ -37,7 +36,7 @@ namespace Capstone.Core
         public float TimeRemaining { get; private set; }
 
         private Combat.Health _health;
-        private Vector3 _startPosition;
+        private bool _restarting;
 
         private void Awake()
         {
@@ -48,7 +47,6 @@ namespace Capstone.Core
             }
             if (!player) { Debug.LogError("[RaidManager] player 가 비어 있습니다."); enabled = false; return; }
 
-            _startPosition = player.transform.position;
             _health = player.GetComponent<Combat.Health>();
             if (_health != null) _health.OnDeath += HandleDeath;
 
@@ -155,26 +153,29 @@ namespace Capstone.Core
             Debug.Log("[RaidManager] 플레이어 사망 - R 키로 리스폰");
         }
 
+        /// <summary>
+        /// 다시 시도. 씬을 통째로 다시 불러온다.
+        ///
+        /// 예전에는 여기서 위치 · 체력 · 횃불 · 제한시간만 되돌렸는데, 그러면 <b>가방이 그대로 남는다</b>.
+        /// 죽거나 탈출해서 판이 끝났는데도 챙긴 전리품을 그대로 들고 새 판을 시작하는 셈이라,
+        /// 익스트랙션 슈터의 전제(들고 나가야 내 것이 된다)가 통째로 무너진다.
+        /// 남는 건 가방만이 아니다 - 이미 턴 상자는 비어 있고, 죽은 적은 죽은 채, 시체는 시체인 채,
+        /// 지도의 안개도 걷힌 채로 남는다. 하나씩 되돌리는 것보다 씬을 다시 여는 쪽이 확실하다.
+        /// (마을 · 창고가 생기면 탈출 성공분만 여기서 창고로 옮긴 뒤 씬을 다시 열면 된다)
+        /// </summary>
         public void Respawn()
         {
-            IsDead = false;
-            IsExtracted = false;
-            if (deathPanel) deathPanel.SetActive(false);
+            if (_restarting) return;
+            _restarting = true;
 
-            player.transform.position = spawnPoint ? spawnPoint.position : _startPosition;
+            // 씬을 갈아엎어도 static 은 살아남는다.
+            // 끌던 물건 상태를 남겨두면 새 판이 시작하자마자 이미 사라진 아이템을 붙잡고 있게 된다.
+            UI.ItemDrag.Clear();
+            Time.timeScale = 1f;
 
-            var body = player.GetComponent<Rigidbody2D>();
-            if (body) body.linearVelocity = Vector2.zero;
-
-            // 체력을 되살린다. Health 는 재사용을 염두에 두고 Revive 를 노출한다.
-            var hp = player.GetComponent<Combat.Health>();
-            if (hp != null) hp.Revive();
-
-            var torch = player.GetComponent<Capstone.Player.TorchFuel>();
-            if (torch != null) { torch.SetLit(false); torch.Refill(100f); }
-
-            SetPlayerControlEnabled(true);
-            TimeRemaining = raidMinutes * 60f;
+            var scene = SceneManager.GetActiveScene();
+            if (scene.buildIndex >= 0) SceneManager.LoadScene(scene.buildIndex);
+            else SceneManager.LoadScene(scene.name);      // 빌드 세팅에 없으면 이름으로 (에디터 대비)
         }
 
         /// <summary>결과 화면이 지도에 가리지 않도록 닫는다.</summary>
