@@ -114,7 +114,11 @@ namespace Capstone.Enemy
             _fireAt = -1f;
             if (!projectilePrefab) return;
 
-            Vector2 origin = muzzle ? (Vector2)muzzle.position : (Vector2)transform.position;
+            // 적 총구도 같은 함정을 안고 있다 - 발밑에서 북쪽으로 0.55m 올려둔 자리라
+            // 북쪽에 벽이 있으면 벽 속에서 투사체가 생긴다
+            Vector2 body = (Vector2)transform.position + Vector2.up * 0.19f;
+            Vector2 desired = muzzle ? (Vector2)muzzle.position : body;
+            Vector2 origin = Combat.ProjectileOrigin.Resolve(body, desired, sightBlockMask);
 
             // 겨누는 사이에 벽이 끼어들었으면 쏘지 않는다.
             // 기억해 둔 자리로 쏘는 규칙은 그대로 두되, 총구에서 그 자리가 보일 때만이다

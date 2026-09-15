@@ -293,12 +293,22 @@ MonoBehaviour:
   suspectRange: 25
   detectRange: 15
   unlitRangeMultiplier: 0.25
+  litAlertRadius: 0
   sightBlockMask:
     serializedVersion: 2
     m_Bits: 1024
   loseInterestTime: 4
   moveSpeed: 2
   turnSmoothing: 12
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  agentRadius: 0.42
+  wallClearance: 0.55
+  repathInterval: 0.4
+  waypointReach: 0.4
+  stuckGrace: 0.45
+  unstickDuration: 0.5
   spriteRenderer: {fileID: 0}
   projectilePrefab: {fileID: 6592981483982480414, guid: 3783d6b2e96c05b4f963c8ece8bcfb54, type: 3}
   muzzle: {fileID: 7918960173323340972}
@@ -988,7 +998,7 @@ Transform:
   m_GameObject: {fileID: 8626059193809091765}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.55, z: 0}
+  m_LocalPosition: {x: 0, y: 0.19, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

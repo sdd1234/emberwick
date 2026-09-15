@@ -21,6 +21,8 @@ namespace Capstone.Enemy
         [SerializeField] protected float detectRange = 15f;
         [Tooltip("플레이어가 불을 껐을 때 위 두 거리에 곱해지는 배율")]
         [SerializeField, Range(0.05f, 1f)] protected float unlitRangeMultiplier = 0.25f;
+        [Tooltip("불을 켠 채 이 반경 안이면 벽이든 등 뒤든 무조건 발각된다 (m). 0 이면 플레이어 시야 원뿔 길이를 쓴다")]
+        [SerializeField] protected float litAlertRadius = 0f;
         [Tooltip("시야가 벽에 막히는지 검사할 레이어")]
         [SerializeField] protected LayerMask sightBlockMask;
         [Tooltip("발각 후 놓쳤을 때 추격을 유지하는 시간 (초)")]
@@ -57,11 +59,13 @@ namespace Capstone.Enemy
         protected Transform Player;
         protected Combat.PlayerStealth PlayerStealth;
         protected Player.TorchFuel PlayerTorch;
+        protected Player.VisionController PlayerVision;
         protected Rigidbody2D Body;
         protected Vector2 LastKnownPosition;
 
         private float _loseInterestAt;
         private bool _countedAsDetector;
+        private bool _litAlerted;
 
         // 길찾기 상태
         private readonly List<Vector2> _path = new();
@@ -109,6 +113,7 @@ namespace Capstone.Enemy
             Player = pc.transform;
             PlayerStealth = pc.GetComponent<Combat.PlayerStealth>();
             PlayerTorch = pc.GetComponent<Player.TorchFuel>();
+            PlayerVision = pc.GetComponent<Player.VisionController>();
         }
 
         protected virtual void Update()
@@ -128,6 +133,26 @@ namespace Capstone.Enemy
             float mult = lit ? 1f : unlitRangeMultiplier;
             float suspect = suspectRange * mult;
             float detect  = detectRange  * mult;
+
+            // 기획서 7.2 - 빛은 시야이자 노출이다.
+            // 불을 켠 채 이 반경 안에 들어오면 벽 뒤든 등 뒤든 상관없이 들킨다.
+            // 어두운 미로에서 불 하나 켜는 것이 곧 "나 여기 있다"가 되어야 점등이 선택이 된다.
+            if (lit && DistanceToPlayer <= LitAlertRadius)
+            {
+                _litAlerted = true;
+                LastKnownPosition = Player.position;
+                _loseInterestAt = Time.time + loseInterestTime;
+                SetState(AlertState.Alerted);
+                return;
+            }
+
+            // 불이 꺼졌거나 반경을 벗어났다. 빛으로 붙잡아 두던 추격은 그 자리에서 끝난다 -
+            // 아래 일반 판정(시야 + 거리)이 계속 쫓을지를 다시 정한다
+            if (_litAlerted)
+            {
+                _litAlerted = false;
+                _loseInterestAt = 0f;
+            }
 
             bool hasLineOfSight = HasLineOfSight();
 
@@ -152,6 +177,11 @@ namespace Capstone.Enemy
                 SetState(AlertState.Idle);
             }
         }
+
+        /// <summary>불을 켠 플레이어가 무조건 걸리는 반경. 비워두면 플레이어 원뿔 길이를 따라간다.</summary>
+        protected float LitAlertRadius
+            => litAlertRadius > 0f ? litAlertRadius
+             : (PlayerVision != null ? PlayerVision.LitConeRange : 9f);
 
         private bool HasLineOfSight() => HasLineOfSightTo(Player.position);
 

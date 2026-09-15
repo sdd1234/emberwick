@@ -54,6 +54,8 @@ namespace Capstone.Player
         [SerializeField] private float coneAngleOffset = -90f;
 
         /// <summary>현재 시야 원뿔의 반각(도). 적 탐지 판정 등에서 참조한다.</summary>
+        /// <summary>불을 켰을 때의 원뿔 길이. 적이 "이 반경 안이면 무조건 들킨다"의 기준으로 쓴다.</summary>
+        public float LitConeRange => coneRangeLit;
         public float CurrentHalfAngle => _currentFov * 0.5f;
         public float CurrentConeRange => _currentRange;
         public Vector2 ConeDirection => player ? player.AimDirection : Vector2.right;

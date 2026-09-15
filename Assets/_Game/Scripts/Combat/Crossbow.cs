@@ -48,6 +48,10 @@ namespace Capstone.Combat
         [SerializeField] private Transform muzzle;
         [SerializeField] private Player.PlayerController player;
         [SerializeField] private PlayerStealth stealth;
+        [Tooltip("벽으로 볼 레이어. 비우면 Wall 레이어를 쓴다")]
+        [SerializeField] private LayerMask wallMask;
+        [Tooltip("볼트가 나가는 높이 (m). 광원과 같은 평면이어야 '빛이 닿는 데까지 화살도 간다'가 된다")]
+        [SerializeField] private float originHeight = 0.19f;
 
         public int CurrentLevel { get; private set; }
         public bool IsCharging { get; private set; }
@@ -64,10 +68,13 @@ namespace Capstone.Combat
         private bool  _loaded = true;
         private bool  _fullChargeNotified;
 
+        private LayerMask _wall;
+
         private void Awake()
         {
             if (!player)  player  = GetComponentInParent<Player.PlayerController>();
             if (!stealth) stealth = GetComponentInParent<PlayerStealth>();
+            _wall = ProjectileOrigin.DefaultWallMask(wallMask);
         }
 
         private void Update()
@@ -150,8 +157,11 @@ namespace Capstone.Combat
         {
             if (!boltPrefab || !player) return;
 
-            Vector2 origin = muzzle ? (Vector2)muzzle.position
-                                    : (Vector2)player.transform.position + player.AimDirection * 0.6f + Vector2.up * 1.0f;
+            // 총구가 벽 속에 들어가 있으면 몸에서 쏜다.
+            // 탑다운에서 +Y 는 북쪽이라, 어깨 높이로 잡아둔 총구가 북쪽 벽 안에 들어가는 일이 생긴다
+            Vector2 body = (Vector2)player.transform.position + Vector2.up * originHeight;
+            Vector2 desired = muzzle ? (Vector2)muzzle.position : body + player.AimDirection * 0.35f;
+            Vector2 origin = ProjectileOrigin.Resolve(body, desired, _wall);
 
             // 발사 방향은 반드시 '총구에서 커서로' 계산한다.
             // 플레이어 원점 기준으로 쏘면 총구가 원점에서 떨어진 만큼 시차가 생겨 커서에 안 맞는다.

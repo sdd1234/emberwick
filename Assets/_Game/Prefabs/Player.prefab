@@ -223,7 +223,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Combat.WeaponMuzzle
   player: {fileID: 6693632798276786681}
-  shoulderHeight: 0.71875
+  shoulderHeight: 0.19
   reach: 0.2625
   verticalFollow: 0.45
 --- !u!1 &2411008923453599635
@@ -623,6 +623,10 @@ MonoBehaviour:
   muzzle: {fileID: 8798417090375959185}
   player: {fileID: 6693632798276786681}
   stealth: {fileID: 3541215135376698142}
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 0
+  originHeight: 0.19
 --- !u!114 &7391447401747558202
 MonoBehaviour:
   m_ObjectHideFlags: 0
