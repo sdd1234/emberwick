@@ -13,7 +13,10 @@
 - Input System (신규)
 
 클론한 뒤 Unity Hub 에서 폴더를 열면 된다. `Library/` 는 저장소에 없고 최초 실행 시 자동 생성된다.
-시작 씬은 `Assets/_Game/Scenes/Intro.unity`.
+시작 씬은 `Assets/_Game/Scenes/Intro.unity` 이고, 처음 열 때 자동으로 열린다.
+
+> 파란 화면만 보이고 아무것도 안 움직인다면 빈 씬이 열려 있는 것이다.
+> Project 창에서 `Assets/_Game/Scenes/Intro.unity` 를 더블클릭한 뒤 Play 를 누르면 된다.
 
 ## 조작
 
