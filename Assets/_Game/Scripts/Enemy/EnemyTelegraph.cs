@@ -63,6 +63,11 @@ namespace Capstone.Enemy
             canvasRect.position = transform.position + Vector3.up * 0.3f;
             canvasRect.rotation = Quaternion.identity;
 
+            // 적 몸집을 키워도(스케일 2배) 공격 범위 표시는 실제 판정(m) 그대로여야 한다.
+            // 부모 스케일을 나눠 캔버스의 월드 크기를 worldScale 에 고정한다
+            float parentScale = canvasRect.parent != null ? Mathf.Abs(canvasRect.parent.lossyScale.x) : 1f;
+            canvasRect.localScale = Vector3.one * (worldScale / Mathf.Max(0.0001f, parentScale));
+
             if (_melee  != null) UpdateMelee();
             if (_ranged != null) UpdateRanged();
         }

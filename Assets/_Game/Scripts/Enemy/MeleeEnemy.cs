@@ -2,7 +2,10 @@ using UnityEngine;
 
 namespace Capstone.Enemy
 {
-    /// <summary>감염체 계열 - 붙어서 때린다. 소리와 빛에 반응해 몰려든다 (기획서 7.1).</summary>
+    /// <summary>
+    /// 감염체 계열 - 붙어서 때린다 (기획서 7.1).
+    /// 피드백 이후로는 빛이 아니라 소리에 반응한다 (senseMode = Hearing). 3m 안이면 알아차리고 그 너머는 못 본다.
+    /// </summary>
     public class MeleeEnemy : EnemyAI
     {
         [Header("근접 공격")]
@@ -13,6 +16,12 @@ namespace Capstone.Enemy
         [SerializeField] private float attackCooldown = 1.1f;
         [Tooltip("내려치기 전 예비 동작 시간. 플레이어가 구르기로 피할 여지를 준다")]
         [SerializeField] private float windUp = 0.35f;
+
+        [Header("상처 (피드백 - 감염체에게 맞으면 감염 · 출혈)")]
+        [Tooltip("한 대 맞힐 때 쌓이는 감염 (0~100). 감염체만 준다")]
+        [SerializeField] private float infectionPerHit = 0f;
+        [Tooltip("맞혔을 때 피가 나기 시작할 확률")]
+        [SerializeField, Range(0f, 1f)] private float bleedChance = 0f;
 
         [Header("배회")]
         [SerializeField] private float wanderRadius = 3f;
@@ -101,6 +110,17 @@ namespace Capstone.Enemy
             var health = Player.GetComponent<Combat.Health>();
             if (health == null || health.IsDead) return;
             health.TakeDamage(attackDamage, toPlayer.normalized);
+            var ailments = Player.GetComponent<Combat.PlayerAilments>();
+            if (ailments != null && !health.IsDead) ailments.Wound(infectionPerHit, bleedChance);
+        }
+
+        /// <summary>
+        /// 놓치면 그 자리를 새 거점으로 삼아 서성인다.
+        /// 원래 자리로 걸어 돌아가면 소리를 따라왔다가 맥없이 퇴근하는 그림이 된다.
+        /// </summary>
+        protected override void OnStateChanged(AlertState next)
+        {
+            if (next == AlertState.Idle && Body != null) { _home = Body.position; _nextWanderAt = Time.time + 1f; }
         }
 
         private void Wander()

@@ -38,7 +38,7 @@ namespace Capstone.Combat
             var prefab = cfg.PickStain();
             if (prefab == null) return;
 
-            var sr = Instantiate(prefab, transform.position, Quaternion.identity);
+            var sr = Instantiate(prefab, cfg.StainPoint, Quaternion.identity);
             // 탑다운이라 바닥에 깔린 것은 세로로 눌러야 누워 있는 것처럼 보인다
             sr.transform.localScale = new Vector3(1f, 0.62f, 1f);
 

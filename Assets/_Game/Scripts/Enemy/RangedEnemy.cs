@@ -5,6 +5,7 @@ namespace Capstone.Enemy
     /// <summary>
     /// 이교도 / 도적단 계열 - 거리를 두고 쏜다 (기획서 7.1).
     /// 너무 가까우면 물러나고 너무 멀면 붙어서 선호 사거리를 유지한다.
+    /// 평소에는 순찰로를 돈다. 이교도는 2명이 한 조 - 한 명이 길을 잡고(leader) 다른 한 명이 뒤를 따른다.
     /// </summary>
     public class RangedEnemy : EnemyAI
     {
@@ -25,6 +26,27 @@ namespace Capstone.Enemy
         [SerializeField] private float rangeTolerance = 1.5f;
         [Tooltip("이 거리보다 가까워지면 물러난다 (m)")]
         [SerializeField] private float retreatRange = 4f;
+
+        [Header("순찰 (피드백 - 교회 주변 2인 1조)")]
+        [Tooltip("돌아다닐 지점들 (월드 좌표). 끝에 닿으면 처음으로 돌아간다. 비우면 제자리에 선다")]
+        [SerializeField] private Vector2[] patrolPoints;
+        [Tooltip("조장. 채워져 있으면 순찰로 대신 조장의 뒤를 따른다")]
+        [SerializeField] private RangedEnemy patrolLeader;
+        [Tooltip("조장 뒤로 떨어지는 거리 (m)")]
+        [SerializeField] private float followDistance = 1.8f;
+        [SerializeField, Range(0.1f, 1f)] private float patrolSpeed = 0.45f;
+        [Tooltip("지점마다 서서 둘러보는 시간 (초)")]
+        [SerializeField] private float patrolPause = 1.5f;
+
+        private int _patrolIndex;
+        private float _patrolWaitUntil;
+
+        /// <summary>순찰로 설정 (맵 빌더가 부른다).</summary>
+        public void SetPatrol(Vector2[] points, RangedEnemy leader)
+        {
+            patrolPoints = points;
+            patrolLeader = leader;
+        }
 
         /// <summary>조준 진행도 0~1. 조준 중이 아니면 -1.</summary>
         public float AimProgress
@@ -48,7 +70,7 @@ namespace Capstone.Enemy
             if (State != AlertState.Alerted)
             {
                 if (State == AlertState.Suspicious) MoveAlongPathTo(ChaseTarget, 0.4f);
-                else Stop();
+                else Patrol();
                 return;
             }
 
@@ -98,6 +120,36 @@ namespace Capstone.Enemy
                 : (leftOpen ? left : right);
             MoveToward(Position + pick * 2f, speedMultiplier);
             return true;
+        }
+
+        private void Patrol()
+        {
+            // 조원 - 조장이 살아 있으면 그 뒤를 따른다. 조장이 죽으면 혼자 순찰로를 이어 돈다
+            if (patrolLeader != null && patrolLeader.isActiveAndEnabled)
+            {
+                Vector2 lp = patrolLeader.Position;
+                Vector2 heading = patrolLeader.Body != null && patrolLeader.Body.linearVelocity.sqrMagnitude > 0.01f
+                    ? patrolLeader.Body.linearVelocity.normalized
+                    : (lp - Position).normalized;
+                Vector2 slot = lp - heading * followDistance + Vector2.Perpendicular(heading) * 0.6f;
+
+                if (Vector2.Distance(Position, slot) < 0.4f) Stop();
+                else MoveAlongPathTo(slot, Vector2.Distance(Position, slot) > followDistance * 2f ? patrolSpeed * 1.5f : patrolSpeed);
+                return;
+            }
+
+            if (patrolPoints == null || patrolPoints.Length == 0) { Stop(); return; }
+            if (Time.time < _patrolWaitUntil) { Stop(); return; }
+
+            Vector2 goal = patrolPoints[_patrolIndex % patrolPoints.Length];
+            if (Vector2.Distance(Position, goal) <= 0.5f)
+            {
+                _patrolIndex = (_patrolIndex + 1) % patrolPoints.Length;
+                _patrolWaitUntil = Time.time + patrolPause;
+                Stop();
+                return;
+            }
+            MoveAlongPathTo(goal, patrolSpeed);
         }
 
         private void TryStartAim()

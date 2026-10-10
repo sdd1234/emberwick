@@ -8,8 +8,10 @@ namespace Capstone.UI
 {
     /// <summary>
     /// 루팅 화면 (기획서 6.1 / 6.2 / 6.3).
-    /// 왼쪽에 털 대상(상자 · 시체), 오른쪽에 내 가방을 나란히 놓고 드래그로 주고받는다.
-    /// Tab 을 누르면 가방만 단독으로 열린다 (기획서 8.2 - 필드에서는 인벤토리만).
+    /// 왼쪽에 내 가방, 오른쪽에 털 대상(상자 · 시체)과 중요 보관함(3x3)을 놓고 드래그로 주고받는다.
+    /// (피드백 - 예전엔 털 대상이 왼쪽이었는데 가방과 자리를 맞바꿨다)
+    /// Tab 을 누르면 가방과 중요 보관함만 열린다 (기획서 8.2 - 필드에서는 인벤토리만).
+    /// 감정이 끝나 물건이 드러날 때마다 등급별 소리를 낸다 - 좋은 물건일수록 높고 풍성하다.
     /// </summary>
     public class LootScreenUI : MonoBehaviour
     {
@@ -35,14 +37,22 @@ namespace Capstone.UI
         [Tooltip("왼쪽 - 털 대상")]
         [SerializeField] private RectTransform lootSide;
         [SerializeField] private GridPanelUI lootPanel;
-        [Tooltip("오른쪽 - 내 가방")]
+        [Tooltip("왼쪽 - 내 가방")]
         [SerializeField] private GridPanelUI bagPanel;
+        [Tooltip("오른쪽 아래 - 중요 보관함 3x3. 죽어도 남는다")]
+        [SerializeField] private GridPanelUI securePanel;
         [SerializeField] private RectTransform progressBar;
         [SerializeField] private Image progressFill;
         [Tooltip("물건 위를 훑는 돋보기")]
         [SerializeField] private RectTransform magnifier;
         [SerializeField] private TMP_Text weightText;
         [SerializeField] private TMP_Text hintText;
+
+        [Header("감정 소리 (피드백)")]
+        [SerializeField] private AudioSource sfxSource;
+        [Tooltip("등급 순서대로 - 일반 / 레어 / 유니크 / 전설")]
+        [SerializeField] private AudioClip[] revealClips = new AudioClip[4];
+        [SerializeField, Range(0f, 1f)] private float revealVolume = 0.8f;
 
         /// <summary>어떤 격자 화면이든 열려 있으면 true. 조준점과 사격을 끄는 데 쓴다.</summary>
         public static bool AnyScreenOpen { get; private set; }
@@ -60,7 +70,30 @@ namespace Capstone.UI
             SetOpen(false);
         }
 
-        private void OnDisable() => AnyScreenOpen = false;
+        private void OnDisable()
+        {
+            AnyScreenOpen = false;
+            Listen(null);
+        }
+
+        // ---------- 감정 소리 ----------
+        private LootContainer _listening;
+
+        /// <summary>지금 열린 상자의 감정 소식만 듣는다. 닫힌 상자가 소리를 내면 안 된다.</summary>
+        private void Listen(LootContainer box)
+        {
+            if (_listening == box) return;
+            if (_listening != null) _listening.OnSlotIdentified -= PlayReveal;
+            _listening = box;
+            if (_listening != null) _listening.OnSlotIdentified += PlayReveal;
+        }
+
+        private void PlayReveal(GridItem item)
+        {
+            if (item == null || item.Def == null || sfxSource == null || revealClips == null) return;
+            int g = Mathf.Clamp((int)item.Def.grade, 0, revealClips.Length - 1);
+            if (revealClips[g] != null) sfxSource.PlayOneShot(revealClips[g], revealVolume);
+        }
 
         private void Update()
         {
@@ -110,7 +143,9 @@ namespace Capstone.UI
 
             lootPanel.Bind(box.Grid, box.DisplayLabel, box);
             bagPanel.Bind(inventory.Grid, "가방");
-            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   [F] / [ESC] 닫기";
+            if (securePanel) securePanel.Bind(Core.GameSession.Secure, "중요 보관함  (사망해도 유지)");
+            Listen(box);
+            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [F] / [ESC] 닫기";
         }
 
         private void OpenBagOnly()
@@ -122,7 +157,9 @@ namespace Capstone.UI
             if (magnifier) magnifier.gameObject.SetActive(false);
 
             bagPanel.Bind(inventory.Grid, "가방");
-            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   [Tab] / [ESC] 닫기";
+            if (securePanel) securePanel.Bind(Core.GameSession.Secure, "중요 보관함  (사망해도 유지)");
+            Listen(null);
+            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [Tab] / [ESC] 닫기";
         }
 
         private void CloseAll()
@@ -130,6 +167,8 @@ namespace Capstone.UI
             _bagOnly = false;
             lootPanel.Unbind();
             bagPanel.Unbind();
+            if (securePanel) securePanel.Unbind();
+            Listen(null);
             SetOpen(false);
         }
 
@@ -192,6 +231,9 @@ namespace Capstone.UI
 
             var bagSide = root.Find("BagSide");
             if (bagPanel == null && bagSide != null) bagPanel = bagSide.GetComponentInChildren<GridPanelUI>(true);
+            var secureSide = root.Find("SecureSide");
+            if (securePanel == null && secureSide != null) securePanel = secureSide.GetComponentInChildren<GridPanelUI>(true);
+            if (sfxSource == null) sfxSource = GetComponent<AudioSource>();
 
             if (progressBar == null && lootSide != null) progressBar = lootSide.Find("ProgressBG") as RectTransform;
             if (progressFill == null && progressBar != null)

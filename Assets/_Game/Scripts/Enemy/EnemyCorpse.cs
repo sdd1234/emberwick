@@ -24,6 +24,9 @@ namespace Capstone.Enemy
         [Header("연출")]
         [Tooltip("쓰러질 때 눕히는 각도")]
         [SerializeField] private float fallAngle = 82f;
+
+        /// <summary>쓰러지는 각도. 바라보던 쪽(flipX)에 따라 부호가 바뀐다 - 핏자국 자리를 미리 잡는 데 쓴다.</summary>
+        public float FallAngleFor(bool flipX) => flipX ? -fallAngle : fallAngle;
         [Tooltip("쓰러지는 데 걸리는 시간(초). 0 이면 즉시 눕는다")]
         [SerializeField] private float fallDuration = 0.28f;
         [SerializeField] private Color corpseTint = new(0.55f, 0.52f, 0.52f, 1f);
@@ -89,7 +92,8 @@ namespace Capstone.Enemy
             var lootCollider = gameObject.AddComponent<CircleCollider2D>();
             lootCollider.isTrigger = true;
             lootCollider.radius = 0.5f;
-            lootCollider.offset = new Vector2(0f, 0.3f);
+            // 발밑 피벗이라 몸통 가운데는 로컬로 키의 절반쯤 위다 (시체와 함께 기울어 누운 몸 위에 온다)
+            lootCollider.offset = new Vector2(0f, 0.5f);
 
             var container = gameObject.AddComponent<LootContainer>();
             container.SetupAsCorpse(corpseLabel, RollDrops(), searchTime);

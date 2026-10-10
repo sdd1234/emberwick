@@ -14,7 +14,7 @@ namespace Capstone.UI
     /// </summary>
     public class GridItemView : MonoBehaviour,
         IBeginDragHandler, IDragHandler, IEndDragHandler,
-        IPointerEnterHandler, IPointerExitHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [Header("프리팹 조각")]
         [Tooltip("블록 바탕. 등급 색이 옅게 깔린다")]
@@ -63,8 +63,9 @@ namespace Capstone.UI
                 bool hasIcon = icon.enabled;
                 label.text = _item.Def.displayName;
                 label.alignment = hasIcon ? TextAlignmentOptions.Bottom : TextAlignmentOptions.Center;
-                label.fontSizeMax = hasIcon ? 12f : 15f;
-                label.fontSizeMin = 7f;
+                float k = _panel.CellSize / 56f;      // 칸 크기를 키우면 글자도 같이 커져야 한다
+                label.fontSizeMax = (hasIcon ? 12f : 15f) * k;
+                label.fontSizeMin = 7f * k;
                 label.color = hasIcon ? new Color(0.93f, 0.92f, 0.89f, 0.95f) : c;
 
                 countLabel.text = _item.Count > 1 ? $"x{_item.Count}" : "";
@@ -77,8 +78,9 @@ namespace Capstone.UI
                 icon.enabled = false;                    // 정체가 드러나기 전엔 아이콘도 감춘다
                 label.text = "?";
                 label.alignment = TextAlignmentOptions.Center;
-                label.fontSizeMax = 34f;
-                label.fontSizeMin = 20f;
+                float k = _panel.CellSize / 56f;
+                label.fontSizeMax = 34f * k;
+                label.fontSizeMin = 20f * k;
                 label.color = new Color(0.62f, 0.60f, 0.58f, 1f);
                 countLabel.text = "";
             }
@@ -150,6 +152,18 @@ namespace Capstone.UI
         }
 
         public void OnPointerExit(PointerEventData e) => ItemTooltip.Hide();
+
+        /// <summary>우클릭 - 쓸 수 있는 물건(붕대)이면 쓴다. 상자 · 시체 안의 물건은 먼저 가져와야 한다.</summary>
+        public void OnPointerClick(PointerEventData e)
+        {
+            if (e.button != PointerEventData.InputButton.Right || _item == null || ItemDrag.IsDragging) return;
+            if (_panel.Container != null || !Items.ItemUse.IsUsable(_item.Def)) return;
+            var pc = FindFirstObjectByType<Player.PlayerController>();
+            if (pc == null || pc.GetComponent<Combat.PlayerAilments>() == null) return;     // 마을에서는 쓰지 않는다
+            ItemTooltip.Hide();
+            Items.ItemUse.TryUse(_item, _panel.Grid, pc.gameObject, out var msg);
+            HUDController.Toast(msg);
+        }
 
         public void OnEndDrag(PointerEventData e)
         {

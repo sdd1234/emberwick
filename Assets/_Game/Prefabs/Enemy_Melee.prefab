@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1302437176652613338}
   - component: {fileID: 8219713873070809557}
   - component: {fileID: 5804473830820657676}
+  - component: {fileID: 5514904673262312116}
   m_Layer: 9
   m_Name: Enemy_Melee
   m_TagString: Untagged
@@ -33,7 +34,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 120, y: 100, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3307558283862003532}
@@ -117,7 +118,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4225427793745670501, guid: 795eee041ff97b840b9b4419e7d4df23, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 64f7570284a30a941b041867a81d5fb0, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -126,7 +127,7 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
+  m_SpriteSortPoint: 1
 --- !u!114 &905456226332595948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,21 +155,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 830fcbe96bb7994459658c92807f2492, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.MeleeEnemy
+  senseMode: 1
+  noticeRadius: 3
+  sightConeRange: 7
+  sightConeAngle: 100
+  canHear: 1
+  hearingMultiplier: 1
+  keepChasingOnceSeen: 1
+  giveUpDistance: 25
   suspectRange: 25
   detectRange: 15
   unlitRangeMultiplier: 0.25
+  litAlertRadius: 0
   sightBlockMask:
     serializedVersion: 2
     m_Bits: 1024
   loseInterestTime: 4
   moveSpeed: 2.2
   turnSmoothing: 12
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  agentRadius: 0.8
+  wallClearance: 0.95
+  repathInterval: 0.4
+  waypointReach: 0.4
+  stuckGrace: 0.45
+  unstickDuration: 0.5
   spriteRenderer: {fileID: 0}
-  attackRange: 1.2
+  attackRange: 1.8000001
   attackArcDegrees: 110
   attackDamage: 12
   attackCooldown: 1.1
   windUp: 0.35
+  infectionPerHit: 20
+  bleedChance: 0.6
   wanderRadius: 3
   wanderInterval: 2.5
 --- !u!114 &1302437176652613338
@@ -261,13 +282,42 @@ MonoBehaviour:
   sprayArc: 70
   dropletDrag: 5.5
   dropletScale: {x: 0.06, y: 0.17}
-  stainRadius: 0.62
+  stainRadius: 1.15
   stainGrow: 0.22
   maxSpecks: 10
   flashColor: {r: 1, g: 0.94, b: 0.88, a: 1}
   flashDuration: 0.12
   flashGrow: 1.12
   killShake: 0.22
+--- !u!114 &5514904673262312116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414121820723608735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 238cd485d81cac1489a58f24e5ce76fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemySpriteAnimator
+  target: {fileID: 4025251782566670995}
+  artFacesLeft: 1
+  idle:
+  - {fileID: 21300000, guid: 64f7570284a30a941b041867a81d5fb0, type: 3}
+  - {fileID: 21300000, guid: 7087d77e4ed4af944b89e7fe5a9323a1, type: 3}
+  walk:
+  - {fileID: 21300000, guid: 9f6dc15db07b8954f8d895bec64f1823, type: 3}
+  - {fileID: 21300000, guid: 6b6404dcff7c9074ca8004d5624283bb, type: 3}
+  attack:
+  - {fileID: 21300000, guid: 50df3771febf8814dba30ee59858e0c0, type: 3}
+  - {fileID: 21300000, guid: ff86981c6dc868e4397d6e7e292e476f, type: 3}
+  reload: []
+  idleFps: 2
+  walkFps: 5
+  walkThreshold: 0.25
+  strikeAt: 0.7
+  reloadPoseSeconds: 0.9
 --- !u!1 &424377146245694875
 GameObject:
   m_ObjectHideFlags: 0
@@ -463,7 +513,7 @@ MonoBehaviour:
   strikeStartScale: 0.25
   rangedRingColor: {r: 0.95, g: 0.25, b: 0.22, a: 0.85}
   ringStartScale: 3.4
-  ringEndRadius: 0.75
+  ringEndRadius: 1.5
   worldScale: 0.01
   canvasRect: {fileID: 7018660038022620988}
   zone: {fileID: 5046391772896530630}
@@ -875,7 +925,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemyAlertIcon
   enemy: {fileID: 0}
-  height: 1.09375
+  height: 3.5
   worldScale: 0.006
   suspiciousColor: {r: 0.98, g: 0.82, b: 0.3, a: 1}
   alertedColor: {r: 0.95, g: 0.26, b: 0.22, a: 1}

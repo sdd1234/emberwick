@@ -1,0 +1,442 @@
+{
+ "Enemies/Rogue/rogue_idle.png": {
+  "pivot": [
+   0.5544,
+   0.0
+  ],
+  "size": [
+   653,
+   720
+  ]
+ },
+ "Enemies/Rogue/rogue_walk_0.png": {
+  "pivot": [
+   0.5544,
+   0.0
+  ],
+  "size": [
+   653,
+   720
+  ]
+ },
+ "Enemies/Rogue/rogue_walk_1.png": {
+  "pivot": [
+   0.5544,
+   0.0
+  ],
+  "size": [
+   653,
+   720
+  ]
+ },
+ "Enemies/Rogue/rogue_attack.png": {
+  "pivot": [
+   0.5544,
+   0.0
+  ],
+  "size": [
+   653,
+   720
+  ]
+ },
+ "Enemies/Infected/infected_idle_0.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Infected/infected_idle_1.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Infected/infected_walk_0.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Infected/infected_walk_1.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Infected/infected_attack_0.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Infected/infected_attack_1.png": {
+  "pivot": [
+   0.4463,
+   0.0
+  ],
+  "size": [
+   637,
+   731
+  ]
+ },
+ "Enemies/Cultist/cultist_idle.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Enemies/Cultist/cultist_walk_0.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Enemies/Cultist/cultist_walk_1.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Enemies/Cultist/cultist_shoot.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Enemies/Cultist/cultist_reload.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Enemies/Cultist/priest_idle.png": {
+  "pivot": [
+   0.6667,
+   0.0
+  ],
+  "size": [
+   478,
+   697
+  ]
+ },
+ "Characters/Hero/player_idle_0.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_idle_1.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walk_0.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walk_1.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walk_2.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walk_3.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walkline_0.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walkline_1.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walkline_2.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Characters/Hero/player_walkline_3.png": {
+  "pivot": [
+   1.2665,
+   0.0
+  ],
+  "size": [
+   349,
+   672
+  ]
+ },
+ "Env/Forest/spruce_big.png": {
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "size": [
+   639,
+   1152
+  ]
+ },
+ "Env/Forest/spruce_big_crown.png": {
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "size": [
+   639,
+   895
+  ]
+ },
+ "Env/Forest/spruce_small.png": {
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "size": [
+   177,
+   320
+  ]
+ },
+ "Env/Forest/spruce_small_crown.png": {
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "size": [
+   177,
+   267
+  ]
+ },
+ "Env/Forest/bush_fern.png": {
+  "pivot": [
+   0.5,
+   0.15
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/bush_leaf.png": {
+  "pivot": [
+   0.5,
+   0.15
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/bush_leaf_2.png": {
+  "pivot": [
+   0.5,
+   0.15
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/branches_loose.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   448,
+   448
+  ]
+ },
+ "Env/Forest/branches_dense.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   288
+  ]
+ },
+ "Env/Forest/ground_tile_0.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/ground_tile_1.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/ground_tile_2.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/ground_tile_3.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Env/Forest/ground_fern.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "Env/Forest/ground_dirt.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   1024,
+   1024
+  ]
+ },
+ "Env/Forest/road_edge.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   256
+  ]
+ },
+ "Env/Forest/dirt_disc.png": {
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "size": [
+   384,
+   384
+  ]
+ },
+ "Characters/Hero/player_aim.png": {
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "size": [
+   789,
+   672
+  ]
+ }
+}

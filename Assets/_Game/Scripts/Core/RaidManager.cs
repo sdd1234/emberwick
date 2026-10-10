@@ -29,6 +29,8 @@ namespace Capstone.Core
         [Header("씬")]
         [Tooltip("판이 끝나면 돌아갈 마을 씬. Build Settings 에 등록되어 있어야 한다")]
         [SerializeField] private string townSceneName = "Town";
+        [Tooltip("탈출 성공 화면을 보여주는 시간 (초). 끝나면 어두워지며 마을로 간다")]
+        [SerializeField] private float extractShowSeconds = 2.8f;
 
         [Header("UI")]
         [SerializeField] private GameObject deathPanel;
@@ -116,8 +118,12 @@ namespace Capstone.Core
                 string lost = GameSession.LastRaidLost > 0
                     ? $"\n창고가 좁아 {GameSession.LastRaidLost}종은 흘렸다"
                     : "";
-                deathText.text = $"탈출 성공\n\n회수 {carried}종 · {weight:0.0}kg\n값어치 {GameSession.LastRaidValue:N0} G{lost}\n\n[R] 마을로";
+                deathText.text = $"탈출 성공\n\n회수 {carried}종 · {weight:0.0}kg\n값어치 {GameSession.LastRaidValue:N0} G{lost}";
             }
+
+            // 탈출은 버튼을 기다리지 않는다 - 성공 화면을 잠깐 보여주고 어두워지며 바로 마을로 (피드백)
+            _leaving = true;
+            UI.SceneFade.Go(townSceneName, extractShowSeconds);
 
             Debug.Log($"[RaidManager] 탈출 완료 - {carried}종 {weight:0.0}kg 회수 · 창고 입고 {GameSession.LastRaidHaul}종");
         }
@@ -190,9 +196,7 @@ namespace Capstone.Core
             // 씬을 갈아엎어도 static 은 살아남는다.
             // 끌던 물건 상태를 남겨두면 마을에서 이미 사라진 아이템을 붙잡고 있게 된다.
             UI.ItemDrag.Clear();
-            Time.timeScale = 1f;
-
-            SceneManager.LoadScene(townSceneName);
+            UI.SceneFade.Go(townSceneName);
         }
 
         /// <summary>결과 화면이 지도에 가리지 않도록 닫는다.</summary>

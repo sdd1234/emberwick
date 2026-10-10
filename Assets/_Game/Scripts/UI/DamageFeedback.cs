@@ -85,6 +85,15 @@ namespace Capstone.UI
 
         private void HandleDamaged(float amount, Vector2 direction)
         {
+            // 어둠에 갉아먹히는 피해는 매초 들어온다. 맞을 때처럼 번쩍이고 흔들면 화면이 쉬지 않고 붉다.
+            // 옅게 한 번 스치기만 하고 흔들지 않는다 - 가장자리 어둠이 주된 신호다
+            if (health != null && health.LastDamageQuiet)
+            {
+                _peak = Mathf.Max(_peak, 0.28f);
+                _timer = Mathf.Max(_timer, flashDuration * 0.6f);
+                return;
+            }
+
             float t = Mathf.Clamp01(amount / Mathf.Max(1f, damageForFullFlash));
             // 연속으로 맞으면 더 진해지되, 시간은 항상 처음부터 다시 센다
             _peak = Mathf.Clamp01(Mathf.Max(_peak, Mathf.Lerp(0.45f, 1f, t)));

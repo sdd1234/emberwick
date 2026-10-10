@@ -151,6 +151,7 @@ GameObject:
   - component: {fileID: 2320258828576445009}
   - component: {fileID: 8207448805904473891}
   - component: {fileID: 8253340556567428566}
+  - component: {fileID: 6219199133866340047}
   m_Layer: 9
   m_Name: Enemy_Ranged
   m_TagString: Untagged
@@ -168,7 +169,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 130, y: 100, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8097823833780267608}
@@ -253,7 +254,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4382790597617945321, guid: 788ab12569df18c4787b18c85baaf9b7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8c2c1c45f80c64d49bbc587e6c62e699, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -262,7 +263,7 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
+  m_SpriteSortPoint: 1
 --- !u!114 &8286663074004475480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -290,6 +291,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbb3579178c253244bf45746d72e0602, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.RangedEnemy
+  senseMode: 0
+  noticeRadius: 3
+  sightConeRange: 10
+  sightConeAngle: 110
+  canHear: 1
+  hearingMultiplier: 1
+  keepChasingOnceSeen: 0
+  giveUpDistance: 25
   suspectRange: 25
   detectRange: 15
   unlitRangeMultiplier: 0.25
@@ -303,8 +312,8 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
-  agentRadius: 0.42
-  wallClearance: 0.55
+  agentRadius: 0.8
+  wallClearance: 0.95
   repathInterval: 0.4
   waypointReach: 0.4
   stuckGrace: 0.45
@@ -319,6 +328,11 @@ MonoBehaviour:
   preferredRange: 8
   rangeTolerance: 1.5
   retreatRange: 4
+  patrolPoints: []
+  patrolLeader: {fileID: 0}
+  followDistance: 1.8
+  patrolSpeed: 0.45
+  patrolPause: 1.5
 --- !u!114 &2320258828576445009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,13 +423,41 @@ MonoBehaviour:
   sprayArc: 70
   dropletDrag: 5.5
   dropletScale: {x: 0.06, y: 0.17}
-  stainRadius: 0.62
+  stainRadius: 1.15
   stainGrow: 0.22
   maxSpecks: 10
   flashColor: {r: 1, g: 0.94, b: 0.88, a: 1}
   flashDuration: 0.12
   flashGrow: 1.12
   killShake: 0.22
+--- !u!114 &6219199133866340047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 357252038720265789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 238cd485d81cac1489a58f24e5ce76fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemySpriteAnimator
+  target: {fileID: 48042382393357112}
+  artFacesLeft: 1
+  idle:
+  - {fileID: 21300000, guid: 8c2c1c45f80c64d49bbc587e6c62e699, type: 3}
+  walk:
+  - {fileID: 21300000, guid: 45e33d2035ce8ac4ca363dd06db97d50, type: 3}
+  - {fileID: 21300000, guid: d84e22b7b55f29047a8d00410748f217, type: 3}
+  attack:
+  - {fileID: 21300000, guid: 63027a2f794053e48a6ff5f86c73169a, type: 3}
+  reload:
+  - {fileID: 21300000, guid: 539e6e3d75433764ebb40f9c60e55d9c, type: 3}
+  idleFps: 2
+  walkFps: 5
+  walkThreshold: 0.25
+  strikeAt: 0.7
+  reloadPoseSeconds: 0.9
 --- !u!1 &1330268593106489844
 GameObject:
   m_ObjectHideFlags: 0
@@ -907,7 +949,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemyAlertIcon
   enemy: {fileID: 0}
-  height: 1.09375
+  height: 3.5
   worldScale: 0.006
   suspiciousColor: {r: 0.98, g: 0.82, b: 0.3, a: 1}
   alertedColor: {r: 0.95, g: 0.26, b: 0.22, a: 1}
@@ -967,7 +1009,7 @@ MonoBehaviour:
   strikeStartScale: 0.25
   rangedRingColor: {r: 0.95, g: 0.25, b: 0.22, a: 0.85}
   ringStartScale: 3.4
-  ringEndRadius: 0.75
+  ringEndRadius: 1.5
   worldScale: 0.01
   canvasRect: {fileID: 379365501277853685}
   zone: {fileID: 7567827641415745343}

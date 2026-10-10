@@ -24,10 +24,19 @@ namespace Capstone.Combat
 
         private void Awake() => Current = maxHealth;
 
-        public void TakeDamage(float amount, Vector2 hitDirection = default)
+        /// <summary>
+        /// 방금 받은 피해가 "조용한" 피해였는지 (어둠 패널티처럼 맞은 게 아니라 깎이는 것).
+        /// 피격 연출이 붉은 번쩍임 · 카메라 흔들림을 줄이는 데 쓴다.
+        /// </summary>
+        public bool LastDamageQuiet { get; private set; }
+
+        public void TakeDamage(float amount, Vector2 hitDirection = default) => TakeDamage(amount, hitDirection, false);
+
+        public void TakeDamage(float amount, Vector2 hitDirection, bool quiet)
         {
             if (IsDead || Invulnerable || amount <= 0f) return;
 
+            LastDamageQuiet = quiet;
             Current = Mathf.Max(0f, Current - amount);
             OnDamaged?.Invoke(amount, hitDirection);
             OnChanged?.Invoke();

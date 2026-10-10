@@ -19,7 +19,26 @@ namespace Capstone.Core
         public const int StashColumns = 12;
         public const int StashRows = 8;
 
+        /// <summary>중요 보관함 크기 (피드백 - 3x3). 죽어도 잃지 않는다.</summary>
+        public const int SecureColumns = 3;
+        public const int SecureRows = 3;
+
         private static Items.ItemGrid _stash;
+        private static Items.ItemGrid _secure;
+
+        /// <summary>
+        /// 중요 보관함. 레이드에 늘 들고 들어가고, 죽어도 안에 든 것은 남는다.
+        /// 가방과 달리 판이 끝나도 비우지 않는다 - 그래서 씬 바깥(세션)에 둔다.
+        /// 무게 제한은 없다. 칸 수(9칸)가 곧 제한이다.
+        /// </summary>
+        public static Items.ItemGrid Secure
+        {
+            get
+            {
+                if (_secure == null) _secure = new Items.ItemGrid(SecureColumns, SecureRows);
+                return _secure;
+            }
+        }
 
         public static Items.ItemGrid Stash
         {
@@ -48,6 +67,7 @@ namespace Capstone.Core
         /// 레이드 한 판을 끝낸다.
         /// 살아 나왔으면 가방에 든 것이 창고로 옮겨지고, 죽었으면 전부 사라진다.
         /// 어느 쪽이든 가방은 비워진다 - 다음 판은 맨몸으로 시작한다.
+        /// 중요 보관함(Secure)은 여기서 건드리지 않는다 - 살든 죽든 그대로 남는다.
         /// </summary>
         public static void FinishRaid(bool survived, Items.ItemGrid bag)
         {
@@ -102,6 +122,19 @@ namespace Capstone.Core
             return gained;
         }
 
+        /// <summary>
+        /// 가게에서 하나 산다. 돈이 모자라거나 창고에 자리가 없으면 아무것도 안 하고 false.
+        /// 산 물건은 창고로 들어간다 - 레이드에 들고 가려면 중요 보관함으로 옮겨야 한다.
+        /// </summary>
+        public static bool Buy(Items.ItemDefinition def, int price)
+        {
+            if (def == null || price < 0 || Gold < price) return false;
+            if (!Stash.TryAutoPlace(new Items.GridItem { Def = def, Count = 1, Identified = true })) return false;
+            Gold -= price;
+            OnChanged?.Invoke();
+            return true;
+        }
+
         /// <summary>격자에 있는 것을 전부 판다. 총액을 돌려준다.</summary>
         public static int SellAll(Items.ItemGrid grid)
         {
@@ -128,6 +161,7 @@ namespace Capstone.Core
             // 새 격자로 갈아끼우지 않고 비우기만 한다.
             // 갈아끼우면 이미 이 격자의 OnChanged 를 듣고 있는 화면이 옛 격자에 묶인 채 남는다.
             if (_stash != null) _stash.Clear();
+            if (_secure != null) _secure.Clear();
             Gold = 0;
             HasRaided = false;
             LastRaidSurvived = false;

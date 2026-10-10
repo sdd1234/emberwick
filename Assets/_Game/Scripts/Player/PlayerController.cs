@@ -42,6 +42,7 @@ namespace Capstone.Player
         public bool IsMoving => MoveInput.sqrMagnitude > 0.01f;
 
         private Rigidbody2D _rb;
+        private Combat.PlayerAilments _ailments;
         private Camera _cam;
         private Vector2 _velocity;
         private Vector2 _rollDirection;
@@ -59,6 +60,7 @@ namespace Capstone.Player
             if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
             if (!stamina) stamina = GetComponent<PlayerStamina>();
             if (!health) health = GetComponent<Combat.Health>();
+            _ailments = GetComponent<Combat.PlayerAilments>();
         }
 
         private void Start() => _cam = Camera.main;
@@ -82,6 +84,7 @@ namespace Capstone.Player
 
             float target = IsSprinting ? sprintSpeed : walkSpeed;
             target *= Mathf.Clamp01(ExternalSpeedMultiplier);
+            if (_ailments != null) target *= _ailments.MoveSpeedMultiplier;      // 감염이 쌓일수록 무거워진다
 
             Vector2 desired = MoveInput * target;
             _velocity = Vector2.MoveTowards(_velocity, desired, acceleration * Time.fixedDeltaTime);

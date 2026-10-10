@@ -28,6 +28,12 @@ namespace Capstone.Items
         public bool stackable;
         public int maxStack = 1;
 
+        [Header("사용 효과 (소모품)")]
+        [Tooltip("쓰면 회복하는 체력. 0 이면 회복 효과 없음")]
+        public float healAmount = 0f;
+        [Tooltip("쓰면 출혈이 멎는다 (붕대)")]
+        public bool stopsBleeding = false;
+
         public Color GradeColor => grade.ToColor();
     }
 }

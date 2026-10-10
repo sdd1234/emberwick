@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
@@ -9,7 +8,8 @@ namespace Capstone.Core
     /// <summary>
     /// 마을 (기획서 3 - 레이드와 레이드 사이).
     /// 하는 일은 둘뿐이다. 지난 판이 어떻게 끝났는지 알려주고, 다시 내보낸다.
-    /// 판매는 ShopUI 가 맡는다.
+    /// 거래는 건물(TownShop)과 거래창(ShopUI)이, 출격은 레이드 이동 지역(RaidGate)의 예/아니오 창이 맡는다.
+    /// 생환하든 죽든 이 씬이 새로 열리므로 플레이어는 늘 스폰 위치에서 시작한다.
     /// </summary>
     public class TownManager : MonoBehaviour
     {
@@ -20,6 +20,7 @@ namespace Capstone.Core
         [Header("조각")]
         [Tooltip("지난 판의 결과를 적는 줄")]
         [SerializeField] private TMP_Text headlineText;
+        [Tooltip("비워도 된다. 출격은 RaidGate 가 부른다")]
         [SerializeField] private Button raidButton;
 
         [Header("결과 색")]
@@ -43,15 +44,6 @@ namespace Capstone.Core
 
         private void Start() => WriteHeadline();
 
-        private void Update()
-        {
-            if (_leaving) return;
-
-            var kb = Keyboard.current;
-            if (kb == null) return;
-            if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) Depart();
-        }
-
         /// <summary>다시 레이드로. 씬을 새로 여니 필드도 가방도 처음 상태로 돌아간다.</summary>
         public void Depart()
         {
@@ -59,8 +51,7 @@ namespace Capstone.Core
             _leaving = true;
 
             UI.ItemDrag.Clear();
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(raidSceneName);
+            UI.SceneFade.Go(raidSceneName);
         }
 
         private void WriteHeadline()

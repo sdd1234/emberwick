@@ -52,8 +52,21 @@ namespace Capstone.Combat
         [SerializeField] private LayerMask wallMask;
         [Tooltip("볼트가 나가는 높이 (m). 광원과 같은 평면이어야 '빛이 닿는 데까지 화살도 간다'가 된다")]
         [SerializeField] private float originHeight = 0.19f;
+        [Tooltip("쏠 때 나는 소리 반경 (m). 이 안의 적이 듣고 온다")]
+        [SerializeField] private float shotNoiseRadius = 8f;
+
+        [Header("탄약 (피드백 - 실제 볼트를 쓴다)")]
+        [Tooltip("한 발에 하나씩 쓰는 물건. 비우면 탄약 없이 쏜다")]
+        [SerializeField] private Items.ItemDefinition boltItem;
+        [SerializeField] private Items.PlayerInventory inventory;
+        [Tooltip("레이드를 시작할 때 가방에 넣어 주는 볼트 수 (시작 장비가 생기기 전까지의 기본 지급)")]
+        [SerializeField] private int startingBolts = 10;
 
         public int CurrentLevel { get; private set; }
+        /// <summary>가방 · 보관함에 남은 볼트. 탄약을 안 쓰면 -1.</summary>
+        public int BoltsLeft => boltItem == null ? -1 : Items.ItemUse.Count(boltItem, inventory);
+        /// <summary>볼트가 없어 못 쏜 마지막 시각. HUD 가 "볼트가 없다"를 잠깐 띄운다.</summary>
+        public float LastDryFireAt { get; private set; } = -10f;
         public bool IsCharging { get; private set; }
         public bool IsReloading { get; private set; }
         /// <summary>다음 단계까지의 진행도 0~1. 최고 단계면 1.</summary>
@@ -75,6 +88,13 @@ namespace Capstone.Combat
             if (!player)  player  = GetComponentInParent<Player.PlayerController>();
             if (!stealth) stealth = GetComponentInParent<PlayerStealth>();
             _wall = ProjectileOrigin.DefaultWallMask(wallMask);
+            if (!inventory) inventory = GetComponentInParent<Items.PlayerInventory>();
+        }
+
+        private void Start()
+        {
+            // 시작 볼트 - 맨몸으로 시작하는 지금 구조에서 처음부터 못 쏘면 안 되므로 기본으로 쥐여 준다
+            if (boltItem != null && inventory != null && startingBolts > 0) inventory.TryAdd(boltItem, startingBolts);
         }
 
         private void Update()
@@ -89,7 +109,14 @@ namespace Capstone.Combat
             // wasPressedThisFrame 로 받으면, 재장전 중에 누른 클릭이 그 프레임에 버려진다.
             // 장전이 끝났을 때 버튼을 계속 누르고 있으면 떼었다 다시 눌러야 하는 문제가 생긴다.
             // isPressed 로 보면 장전이 끝나는 즉시 이어서 차징에 들어간다.
-            if (!IsCharging && _loaded && mouse.leftButton.isPressed) BeginCharge();
+            if (!IsCharging && _loaded && mouse.leftButton.isPressed)
+            {
+                if (boltItem != null && BoltsLeft <= 0)
+                {
+                    if (mouse.leftButton.wasPressedThisFrame) LastDryFireAt = Time.time;   // 빈 손 - 당길 시위가 없다
+                }
+                else BeginCharge();
+            }
             if (IsCharging) TickCharge();
             if (mouse.leftButton.wasReleasedThisFrame && IsCharging) Release();
         }
@@ -142,6 +169,14 @@ namespace Capstone.Combat
             bool ambush = isFullCharge && stealth != null && stealth.IsStealthed;
             float damage = baseDamage * lv.damageMultiplier * (ambush ? ambushMultiplier : 1f);
 
+            // 볼트 하나를 꺼내 쓴다 (가방 먼저, 없으면 중요 보관함)
+            if (boltItem != null)
+            {
+                if (!Items.ItemUse.Find(boltItem, inventory, out var stack, out var grid)) { CancelCharge(); LastDryFireAt = Time.time; return; }
+                stack.Count -= 1;
+                if (stack.Count <= 0) grid.Remove(stack); else grid.RaiseChanged();
+            }
+
             Fire(lv, damage, ambush);
 
             if (ambush) stealth.BreakStealth();       // 기획서 7.4 - 기습 후 은신 즉시 해제
@@ -175,6 +210,10 @@ namespace Capstone.Combat
 
             var bolt = Instantiate(boltPrefab, origin, Quaternion.identity);
             bolt.Launch(dir, damage, lv.range, isCrit, player.gameObject);
+
+            // 시위 소리 - 주변 적이 듣고 쏜 자리로 온다
+            var steps = player.GetComponent<Player.Footsteps>();
+            if (steps != null) steps.EmitNoise(shotNoiseRadius, true);
         }
 
         private void CancelCharge()

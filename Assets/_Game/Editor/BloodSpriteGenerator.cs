@@ -43,7 +43,7 @@ namespace Capstone.EditorTools
             for (int x = 0; x < N; x++)
             {
                 float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r)) / r;
-                px[y * N + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(1f - Mathf.SmoothStep(0.72f, 1f, d)));
+                px[y * N + x] = new Color(1f, 1f, 1f, 1f - Step(0.72f, 1f, d));
             }
             return px;
         }
@@ -73,9 +73,20 @@ namespace Capstone.EditorTools
                 float edge = 0.78f;
                 for (int i = 0; i < 4; i++) edge += amp[i] * Mathf.Sin(ang * (i + 2) + phase[i]);
 
-                px[y * N + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(1f - Mathf.SmoothStep(edge * 0.72f, edge, dist)));
+                px[y * N + x] = new Color(1f, 1f, 1f, 1f - Step(edge * 0.72f, edge, dist));
             }
             return px;
+        }
+
+        /// <summary>
+        /// 셰이더의 smoothstep - e0 이하면 0, e1 이상이면 1, 그 사이는 부드럽게.
+        /// Mathf.SmoothStep(a, b, t) 는 이름만 같고 "a 와 b 사이를 t 로 보간"하는 다른 함수다.
+        /// 예전에 그걸 썼더니 텍스처 전체에 0.1~0.4 알파가 깔려 핏자국이 반투명 사각 판으로 보였다.
+        /// </summary>
+        private static float Step(float e0, float e1, float x)
+        {
+            float t = Mathf.Clamp01((x - e0) / Mathf.Max(0.0001f, e1 - e0));
+            return t * t * (3f - 2f * t);
         }
 
         private static void Write(string path, Color[] px)

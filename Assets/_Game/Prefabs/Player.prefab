@@ -37,7 +37,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.3875, y: 0.2625}
+  m_AnchoredPosition: {x: -0.78, y: 0.52}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &8793782898779810017
@@ -123,7 +123,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3645613828287668783}
@@ -273,9 +273,9 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.6
+  m_FalloffIntensity: 0.8825
   m_Color: {r: 1, g: 0.93, b: 0.78, a: 1}
-  m_Intensity: 0.75
+  m_Intensity: 0.97499996
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 00000000
@@ -288,7 +288,7 @@ MonoBehaviour:
   m_NormalMapQuality: 2
   m_UseNormalMap: 0
   m_ShadowsEnabled: 1
-  m_ShadowIntensity: 0.75
+  m_ShadowIntensity: 0.95
   m_ShadowSoftness: 0.3
   m_ShadowSoftnessFalloffIntensity: 0.5
   m_ShadowVolumeIntensityEnabled: 0
@@ -298,7 +298,7 @@ MonoBehaviour:
     m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
-  m_PointLightInnerRadius: 0
+  m_PointLightInnerRadius: 0.20999996
   m_PointLightOuterRadius: 4
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
@@ -357,9 +357,9 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.5
+  m_FalloffIntensity: 0.8825
   m_Color: {r: 1, g: 0.9, b: 0.7, a: 1}
-  m_Intensity: 0.65
+  m_Intensity: 0.8449999
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 00000000
@@ -372,7 +372,7 @@ MonoBehaviour:
   m_NormalMapQuality: 2
   m_UseNormalMap: 0
   m_ShadowsEnabled: 1
-  m_ShadowIntensity: 0.75
+  m_ShadowIntensity: 0.95
   m_ShadowSoftness: 0.3
   m_ShadowSoftnessFalloffIntensity: 0.5
   m_ShadowVolumeIntensityEnabled: 0
@@ -380,10 +380,10 @@ MonoBehaviour:
   m_LocalBounds:
     m_Center: {x: 0, y: -0.00000011920929, z: 0}
     m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
-  m_PointLightInnerAngle: 45
-  m_PointLightOuterAngle: 90
-  m_PointLightInnerRadius: 0.3
-  m_PointLightOuterRadius: 4
+  m_PointLightInnerAngle: 13.499998
+  m_PointLightOuterAngle: 135.90001
+  m_PointLightInnerRadius: 0
+  m_PointLightOuterRadius: 4.51
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
@@ -416,6 +416,13 @@ GameObject:
   - component: {fileID: 8171957199735838990}
   - component: {fileID: 4758613493013141190}
   - component: {fileID: 5750781037291961148}
+  - component: {fileID: 2162574327905427534}
+  - component: {fileID: 8843103803763782830}
+  - component: {fileID: 122944696255919396}
+  - component: {fileID: 5170132009272828602}
+  - component: {fileID: 6732425603757774391}
+  - component: {fileID: 4410370783099668607}
+  - component: {fileID: 4680583299355334170}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -442,6 +449,7 @@ Transform:
   - {fileID: 8798417090375959185}
   - {fileID: 3385669941414987475}
   - {fileID: 4325641344901977703}
+  - {fileID: 2757751252709565150}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &6875695706077459337
@@ -583,11 +591,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 700e52a65551d39419b8976122ef2b99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Items.Interactor
-  radius: 1.6
+  radius: 2.4
   interactableMask:
     serializedVersion: 2
     m_Bits: 2048
-  breakOffDistance: 2.2
+  breakOffDistance: 3.3000002
 --- !u!114 &8949500473145584510
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -627,6 +635,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   originHeight: 0.19
+  shotNoiseRadius: 8
+  boltItem: {fileID: 11400000, guid: 923b8ee45c3bf574294da530bf4293b1, type: 2}
+  inventory: {fileID: 5300434017601993600}
+  startingBolts: 10
 --- !u!114 &7391447401747558202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -644,12 +656,8 @@ MonoBehaviour:
   proximityLight: {fileID: 5117872188253845991}
   coneLight: {fileID: 2455733978112389208}
   globalLight: {fileID: 0}
-  proximityRadius: 4
-  coneRangeUnlit: 4
-  coneRangeLit: 9
-  fovNormal: 90
-  fovAiming: 70
-  coneFalloff: 0.5
+  size: {fileID: 5170132009272828602}
+  brightness: 1.3
   proximityIntensity: 0.75
   coneIntensityUnlit: 0.65
   coneIntensityLit: 1.2
@@ -691,8 +699,8 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.099999994}
-  m_Size: {x: 0.4375, y: 0.19999999}
+  m_Offset: {x: 0, y: 0.2}
+  m_Size: {x: 0.88, y: 0.4}
   m_Direction: 1
 --- !u!95 &4758613493013141190
 Animator:
@@ -729,6 +737,231 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.PlayerAnimatorDriver
   animator: {fileID: 4758613493013141190}
+--- !u!82 &2162574327905427534
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &8843103803763782830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a33579c1ef9960e458dbcb14ce0a1d4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.Footsteps
+  walkNoiseRadius: 3
+  runNoiseRadius: 10
+  rollCountsAsRun: 1
+  walkInterval: 0.5
+  runInterval: 0.32
+  minSpeed: 0.4
+  source: {fileID: 2162574327905427534}
+  walkClips:
+  - {fileID: 8300000, guid: 3a2c9a2b475145f4da3f7ea9c0e22a1c, type: 3}
+  - {fileID: 8300000, guid: fe0eec2f53c5e454aad7cb2a35585139, type: 3}
+  - {fileID: 8300000, guid: 74ebc81612a824f4e8855dff51835db4, type: 3}
+  - {fileID: 8300000, guid: 4e92142c7879a854bb23bc84e6f1b4ca, type: 3}
+  runClips:
+  - {fileID: 8300000, guid: caafc331d2710ef4abd6cbb659629696, type: 3}
+  - {fileID: 8300000, guid: 3c246275430993e44b0b80721d9dc98a, type: 3}
+  - {fileID: 8300000, guid: 0d791896e70766c43af3661f1e0f4111, type: 3}
+  - {fileID: 8300000, guid: acc3abdf500bac14783e2f613cdd2093, type: 3}
+  walkVolume: 0.3
+  runVolume: 0.55
+  pitchJitter: {x: 0.92, y: 1.08}
+  ringPrefab: {fileID: 791331203133134061, guid: 7f48035a8a49ca945ae114abce2f5998, type: 3}
+  showRings: 1
+--- !u!114 &122944696255919396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b900c2388c1e6be4887091710043e5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.DarknessPenalty
+  whisperAfter: 15
+  damageAfter: 30
+  damagePerSecond: {x: 1, y: 4}
+  damageTick: 1
+  torchOnlyPauses: 1
+  whisperSource: {fileID: 5416700153034649498}
+  whisperMaxVolume: 0.75
+  whisperRampSeconds: 10
+  whisperFadeOut: 1.2
+  vignette: {fileID: 0}
+  vignetteAtWhisper: 0.55
+  vignetteAtDamage: 0.92
+  vignettePulse: 0.08
+  torch: {fileID: 0}
+  health: {fileID: 0}
+  controller: {fileID: 0}
+--- !u!114 &5170132009272828602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a951dd55885fda46a9f5c9f21de1b12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.PlayerVisionSize
+  proximityRadius: 4
+  coneRangeUnlit: 4
+  coneRangeLit: 9
+  fovNormal: 90
+  fovAiming: 70
+  coneHeight: 2
+  proximityHeight: 1.25
+  edgeBlur: 0.85
+--- !u!210 &6732425603757774391
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
+--- !u!114 &4410370783099668607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7231c15d8e36dfc4db066a603c7ac5d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Combat.PlayerAilments
+  bleedDamagePerSecond: 1.5
+  bleedTick: 1
+  slowAtFull: 0.75
+  staminaRegenAtFull: 0.4
+  rotInterval: 2
+  health: {fileID: 0}
+--- !u!114 &4680583299355334170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb6760c185e02e74eb54fcc2d12c6045, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.QuickUse
+  bandage: {fileID: 11400000, guid: 2a90ab85f0e233a4c863d14aba246ad1, type: 2}
+  key: 22
+  inventory: {fileID: 0}
 --- !u!1 &4835298272245046183
 GameObject:
   m_ObjectHideFlags: 0
@@ -831,7 +1064,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3645613828287668783}
@@ -885,7 +1118,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 0e7fdf050dbe2fd428b9f0eb8506d3f9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0690dc4f08497be4d9d4ec519e14b90d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -970,3 +1203,132 @@ MonoBehaviour:
   m_FillOrigin: 2
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &8210554931704938785
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2757751252709565150}
+  - component: {fileID: 5416700153034649498}
+  m_Layer: 0
+  m_Name: Whisper
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2757751252709565150
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8210554931704938785}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3645613828287668783}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!82 &5416700153034649498
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8210554931704938785}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: d1cd26997e9f81542bf2da694f85d56d, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 0
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

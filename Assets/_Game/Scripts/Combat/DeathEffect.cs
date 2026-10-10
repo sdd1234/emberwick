@@ -73,6 +73,20 @@ namespace Capstone.Combat
         {
             if (runnerPrefab == null) return;
 
+            // 핏자국은 쓰러진 몸통 아래에 깔려야 한다.
+            // 그림 피벗이 발밑이라 시체는 발을 축으로 옆으로 눕는다 - 발 자리에 피를 찍으면 시체 끝에 묻은 꼴이 된다.
+            // 몸이 눕는 방향으로 키의 절반만큼 옮긴 자리 = 누운 몸통 가운데
+            var sr = GetComponentInChildren<SpriteRenderer>();
+            StainPoint = transform.position;
+            var corpse = GetComponent<Enemy.EnemyCorpse>();
+            if (sr != null && corpse != null)
+            {
+                // 회전 전 키로 잰다 (bounds 는 이미 기울기 시작했으면 짧아진다)
+                float half = sr.sprite != null ? sr.sprite.bounds.size.y * Mathf.Abs(sr.transform.lossyScale.y) * 0.45f : 0.5f;
+                Vector2 along = Quaternion.Euler(0f, 0f, corpse.FallAngleFor(sr.flipX)) * Vector3.up;
+                StainPoint = (Vector2)transform.position + along * half;
+            }
+
             // 연출은 이 오브젝트가 파괴돼도 끝까지 돌아야 하므로 떼어낸 오브젝트에 맡긴다
             var runner = Instantiate(runnerPrefab, transform.position, Quaternion.identity);
             runner.name = $"DeathFX_{name}";
@@ -103,6 +117,8 @@ namespace Capstone.Combat
         internal float DropletDrag => dropletDrag;
         internal Vector2 DropletScale => dropletScale;
         internal float StainRadius => stainRadius;
+        /// <summary>핏자국이 생길 자리 (누운 몸통 가운데). Play 에서 정한다.</summary>
+        internal Vector2 StainPoint { get; private set; }
         internal float StainGrow => stainGrow;
         internal int MaxSpecks => maxSpecks;
         internal Color FlashColor => flashColor;

@@ -5,6 +5,15 @@ namespace Capstone.Enemy
 {
     public enum AlertState { Idle, Suspicious, Alerted }
 
+    /// <summary>무엇으로 플레이어를 찾는가.</summary>
+    public enum SenseMode
+    {
+        /// <summary>이교도 - 빛과 시야로 찾는다 (기획서 7.2)</summary>
+        Sight,
+        /// <summary>감염체 - 소리로만 찾는다. 가까이 붙어야 알아차리고 그 너머는 못 본다 (피드백)</summary>
+        Hearing,
+    }
+
     /// <summary>
     /// 적 공통 AI (기획서 7.2).
     /// 탐지는 거리로만 판정하지 않는다. 플레이어가 불을 켜고 있으면 25m 밖에서도 의심하고
@@ -14,6 +23,30 @@ namespace Capstone.Enemy
     [RequireComponent(typeof(Rigidbody2D))]
     public abstract class EnemyAI : MonoBehaviour
     {
+        [Header("감각")]
+        [Tooltip("Sight = 빛에도 반응한다 (이교도) / Hearing = 빛은 무시한다 (감염체). 시야 원뿔 · 소리 · 근접 감지는 둘 다 쓴다")]
+        [SerializeField] protected SenseMode senseMode = SenseMode.Sight;
+        [Tooltip("이 거리 안이면 어느 쪽을 보고 있든 알아차린다 (m). 등 뒤 기척")]
+        [SerializeField] protected float noticeRadius = 3f;
+
+        [Header("기본 시야 (원뿔)")]
+        [Tooltip("바라보는 방향으로 이 거리 안이면 본다 (m). 불을 껐어도 보인다. 0 이면 끈다")]
+        [SerializeField] protected float sightConeRange = 8f;
+        [Tooltip("시야 원뿔의 전체 각도 (도)")]
+        [SerializeField, Range(10f, 360f)] protected float sightConeAngle = 100f;
+
+        [Header("청각 (발소리 원)")]
+        [Tooltip("발소리 · 사격 소리 원 안에 있으면 바라보는 방향과 상관없이 듣고 그 자리로 간다")]
+        [SerializeField] protected bool canHear = true;
+        [Tooltip("들은 반경에 곱하는 배율. 1 이면 발소리 원과 정확히 같다")]
+        [SerializeField, Range(0.1f, 2f)] protected float hearingMultiplier = 1f;
+
+        [Header("추적")]
+        [Tooltip("한 번 플레이어를 발견하면 벽 뒤로 숨어도 놓치지 않고 계속 쫓는다 (감염체)")]
+        [SerializeField] protected bool keepChasingOnceSeen = false;
+        [Tooltip("이 거리보다 멀어지면 추적을 포기한다 (m)")]
+        [SerializeField] protected float giveUpDistance = 25f;
+
         [Header("탐지 (기획서 7.2)")]
         [Tooltip("빛을 감지해 의심 상태가 되는 거리 (m)")]
         [SerializeField] protected float suspectRange = 25f;
@@ -83,11 +116,56 @@ namespace Capstone.Enemy
         /// <summary>물리 기준 위치. 콜라이더가 발밑에 있어 transform 과 미세하게 다르다.</summary>
         protected Vector2 Position => Body != null ? Body.position : (Vector2)transform.position;
 
-        /// <summary>지금 플레이어가 보이는가. 벽 너머로 때리지 않으려면 공격 전에 반드시 묻는다.</summary>
-        protected bool CanSeePlayer => Player != null && HasLineOfSightTo(Player.position);
+        /// <summary>
+        /// 지금 플레이어가 보이는가. 벽 너머로 때리지 않으려면 공격 전에 반드시 묻는다.
+        /// 감염체는 눈이 거의 멀어 있어 알아차리는 반경 안에서만 "보인다".
+        /// </summary>
+        protected bool CanSeePlayer
+            => Player != null && HasLineOfSightTo(Player.position)
+               && (senseMode != SenseMode.Hearing || DistanceToPlayer <= noticeRadius || InSightCone());
 
-        /// <summary>쫓아갈 곳. 보이면 플레이어, 놓쳤으면 마지막으로 본 자리.</summary>
-        protected Vector2 ChaseTarget => CanSeePlayer ? (Vector2)Player.position : LastKnownPosition;
+        /// <summary>바라보는 방향. 움직이면 가는 쪽, 쫓는 중이면 목표 쪽.</summary>
+        public Vector2 Facing => _facing;
+        public float SightConeRange => sightConeRange;
+        public float SightConeAngle => sightConeAngle;
+        private Vector2 _facing = Vector2.down;
+
+        /// <summary>플레이어가 기본 시야 원뿔 안에 보이는가 (벽에 가리면 안 보인다).</summary>
+        protected bool InSightCone()
+        {
+            if (Player == null || sightConeRange <= 0f) return false;
+            Vector2 to = (Vector2)Player.position - Position;
+            float d = to.magnitude;
+            if (d > sightConeRange) return false;
+            if (d > 0.01f && Vector2.Angle(_facing, to) > sightConeAngle * 0.5f) return false;
+            return HasLineOfSightTo(Player.position);
+        }
+
+        /// <summary>등 뒤든 어디든 바로 옆이면 알아차린다.</summary>
+        private bool Noticed() => Player != null && DistanceToPlayer <= noticeRadius && HasLineOfSightTo(Player.position);
+
+        private void UpdateFacing()
+        {
+            if (State == AlertState.Alerted || State == AlertState.Suspicious)
+            {
+                Vector2 to = ChaseTarget - Position;
+                if (to.sqrMagnitude > 0.04f) { _facing = to.normalized; return; }
+            }
+            Vector2 v = Body != null ? Body.linearVelocity : Vector2.zero;
+            if (v.sqrMagnitude > 0.04f) _facing = v.normalized;
+        }
+
+        public SenseMode Senses => senseMode;
+
+        /// <summary>
+        /// 쫓아갈 곳. 보이거나 추적 중이면 플레이어, 아니면 마지막으로 보거나 들은 자리.
+        /// 감염체는 소리를 들으면 "소리가 마지막으로 난 자리"로 간다 - 플레이어가 아니라.
+        /// </summary>
+        protected Vector2 ChaseTarget => (CanSeePlayer || _hunting) ? (Vector2)Player.position : LastKnownPosition;
+
+        /// <summary>발견한 뒤 놓치지 않고 쫓는 중 (keepChasingOnceSeen).</summary>
+        public bool IsHunting => _hunting;
+        private bool _hunting;
 
         protected virtual void Awake()
         {
@@ -106,6 +184,24 @@ namespace Capstone.Enemy
             }
         }
 
+        protected virtual void OnEnable() => Core.NoiseSystem.OnNoise += HandleNoise;
+        protected virtual void OnDisable() => Core.NoiseSystem.OnNoise -= HandleNoise;
+
+        /// <summary>
+        /// 소리를 들었다. 감염체는 들린 자리로 달려간다 - 플레이어가 아니라 "소리 난 곳"으로.
+        /// 그래서 소리를 내고 옆으로 빠지면 엉뚱한 데를 뒤지는 감염체를 볼 수 있다.
+        /// </summary>
+        private void HandleNoise(Vector2 at, float radius, GameObject source)
+        {
+            if (!canHear || source == gameObject) return;
+            if (_hunting) return;                   // 이미 플레이어를 쫓는 중이면 다른 소리에 끌려가지 않는다
+            if (Vector2.Distance(Position, at) > radius * hearingMultiplier) return;
+
+            LastKnownPosition = at;
+            _loseInterestAt = Time.time + loseInterestTime;
+            SetState(AlertState.Alerted);
+        }
+
         protected virtual void Start()
         {
             var pc = FindFirstObjectByType<Capstone.Player.PlayerController>();
@@ -122,12 +218,15 @@ namespace Capstone.Enemy
             TrackProgress();              // Think 이 새 속도를 넣기 전에 지난 프레임 결과를 본다
             UpdateDetection();
             Think();
+            UpdateFacing();
             FacePlayerIfAware();
         }
 
         private void UpdateDetection()
         {
             DistanceToPlayer = Vector2.Distance(transform.position, Player.position);
+
+            if (senseMode == SenseMode.Hearing) { UpdateHearingDetection(); return; }
 
             bool lit = PlayerTorch != null && PlayerTorch.IsLit;
             float mult = lit ? 1f : unlitRangeMultiplier;
@@ -140,6 +239,16 @@ namespace Capstone.Enemy
             if (lit && DistanceToPlayer <= LitAlertRadius)
             {
                 _litAlerted = true;
+                LastKnownPosition = Player.position;
+                _loseInterestAt = Time.time + loseInterestTime;
+                SetState(AlertState.Alerted);
+                return;
+            }
+
+            // 기본 시야 - 불을 꺼도 정면에 서 있으면 보인다. 등 뒤라도 바로 옆이면 알아차린다
+            if (InSightCone() || Noticed())
+            {
+                _litAlerted = false;
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
                 SetState(AlertState.Alerted);
@@ -176,6 +285,36 @@ namespace Capstone.Enemy
             {
                 SetState(AlertState.Idle);
             }
+        }
+
+        /// <summary>
+        /// 감염체 - 빛은 아예 안 본다. 3m 안에 들어오면 알아차리고, 그 밖의 정보는 소리(HandleNoise)로만 들어온다.
+        /// 마지막으로 들은 곳에 도착해도 아무것도 없으면 잠시 뒤 포기한다.
+        /// </summary>
+        private void UpdateHearingDetection()
+        {
+            // 한 번 발견한 플레이어는 멀리 달아나기 전까지 계속 쫓는다
+            if (_hunting)
+            {
+                if (DistanceToPlayer > giveUpDistance) _hunting = false;
+                else
+                {
+                    LastKnownPosition = Player.position;
+                    _loseInterestAt = Time.time + loseInterestTime;
+                    SetState(AlertState.Alerted);
+                    return;
+                }
+            }
+
+            if (CanSeePlayer)
+            {
+                if (keepChasingOnceSeen) _hunting = true;
+                LastKnownPosition = Player.position;
+                _loseInterestAt = Time.time + loseInterestTime;
+                SetState(AlertState.Alerted);
+                return;
+            }
+            if (State != AlertState.Idle && Time.time >= _loseInterestAt) SetState(AlertState.Idle);
         }
 
         /// <summary>불을 켠 플레이어가 무조건 걸리는 반경. 비워두면 플레이어 원뿔 길이를 따라간다.</summary>
@@ -423,6 +562,17 @@ namespace Capstone.Enemy
 
         private void OnDrawGizmosSelected()
         {
+            Gizmos.color = new Color(0.5f, 0.8f, 1f, 0.5f);
+            Gizmos.DrawWireSphere(transform.position, noticeRadius);
+            if (sightConeRange > 0f)
+            {
+                Vector3 o = transform.position;
+                Vector3 f = (Vector3)(_facing.sqrMagnitude > 0f ? _facing : Vector2.down) * sightConeRange;
+                Gizmos.color = new Color(1f, 0.4f, 0.3f, 0.6f);
+                Gizmos.DrawLine(o, o + Quaternion.Euler(0, 0, sightConeAngle * 0.5f) * f);
+                Gizmos.DrawLine(o, o + Quaternion.Euler(0, 0, -sightConeAngle * 0.5f) * f);
+            }
+            if (senseMode == SenseMode.Hearing) return;
             Gizmos.color = new Color(1f, 0.8f, 0.2f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, suspectRange);
             Gizmos.color = new Color(1f, 0.25f, 0.2f, 0.45f);

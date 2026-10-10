@@ -32,13 +32,20 @@ namespace Capstone.Player
 
         private float _regenBlockedUntil;
 
-        private void Awake() => Current = maxStamina;
+        private Combat.PlayerAilments _ailments;
+
+        private void Awake()
+        {
+            Current = maxStamina;
+            _ailments = GetComponent<Combat.PlayerAilments>();
+        }
 
         private void Update()
         {
             if (Time.time >= _regenBlockedUntil && Current < maxStamina)
             {
-                Current = Mathf.Min(maxStamina, Current + regenPerSecond * Time.deltaTime);
+                float k = _ailments != null ? _ailments.StaminaRegenMultiplier : 1f;   // 감염 - 숨이 덜 돌아온다
+                Current = Mathf.Min(maxStamina, Current + regenPerSecond * k * Time.deltaTime);
                 OnChanged?.Invoke();
             }
         }
