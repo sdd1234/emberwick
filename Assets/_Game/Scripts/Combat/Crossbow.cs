@@ -208,6 +208,9 @@ namespace Capstone.Combat
             float offset = UnityEngine.Random.Range(-halfSpreadDeg, halfSpreadDeg);
             Vector2 dir = (Quaternion.Euler(0f, 0f, offset) * baseDir).normalized;
 
+            FX.SfxBank.Play("bow_shoot", origin, isCrit ? 1f : 0.8f);
+            Player.CameraFollow.KickMain(-dir, isCrit ? 0.12f : 0.05f + 0.02f * CurrentLevel);   // 쏜 반대쪽으로 반동
+            FX.Vfx.Play("vfx_muzzle", origin + Vector2.up * 0.9f + player.AimDirection * 0.5f, player.AimDirection.x < 0f);
             var bolt = Instantiate(boltPrefab, origin, Quaternion.identity);
             bolt.Launch(dir, damage, lv.range, isCrit, player.gameObject);
 

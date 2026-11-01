@@ -19,6 +19,8 @@ namespace Capstone.Combat
         public bool Invulnerable { get; set; }
 
         public event Action<float, Vector2> OnDamaged;   // (피해량, 피격 방향)
+        /// <summary>(실제 피해, 방향, 종류, 결과, 때린 쪽). 타격감 연출 · 적 AI 반격이 듣는다.</summary>
+        public event Action<float, Vector2, DamageType, HitResult, GameObject> OnHit;
         public event Action OnDeath;
         public event Action OnChanged;
 
@@ -31,6 +33,23 @@ namespace Capstone.Combat
         public bool LastDamageQuiet { get; private set; }
 
         public void TakeDamage(float amount, Vector2 hitDirection = default) => TakeDamage(amount, hitDirection, false);
+
+        /// <summary>마지막으로 때린 쪽. 적은 맞으면 그쪽을 돌아본다.</summary>
+        public GameObject LastAttacker { get; private set; }
+
+        /// <summary>종류가 있는 피해. 내성(DamageResistance)이 있으면 먼저 거친다.</summary>
+        public void TakeDamage(float amount, Vector2 hitDirection, DamageType type, GameObject source)
+        {
+            if (IsDead || Invulnerable || amount <= 0f) return;
+            var result = HitResult.Normal;
+            if (_resist == null) _resist = GetComponent<DamageResistance>();
+            if (_resist != null) amount = _resist.Apply(amount, type, out result);
+            if (source != null) LastAttacker = source;
+            OnHit?.Invoke(amount, hitDirection, type, result, source);
+            TakeDamage(amount, hitDirection, false);
+        }
+
+        private DamageResistance _resist;
 
         public void TakeDamage(float amount, Vector2 hitDirection, bool quiet)
         {

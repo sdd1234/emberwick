@@ -15,7 +15,7 @@ namespace Capstone.Core
     {
         [Header("씬")]
         [Tooltip("출격이 불러올 씬. Build Settings 에 등록되어 있어야 한다")]
-        [SerializeField] private string raidSceneName = "Raid";
+        [SerializeField] private string raidSceneName = "Raid_Map1";
 
         [Header("조각")]
         [Tooltip("지난 판의 결과를 적는 줄")]
@@ -61,7 +61,7 @@ namespace Capstone.Core
             if (!GameSession.HasRaided)
             {
                 headlineText.color = survivedColor;
-                headlineText.text = "장이 선 아침이다.  팔 것을 내놓고 다시 나가라.";
+                headlineText.text = "해 저문 장터다.  팔 것을 내놓고 다시 나가라.";
                 return;
             }
 

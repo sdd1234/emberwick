@@ -55,13 +55,15 @@ namespace Capstone.UI
                 var c = _item.Def.grade.ToColor();
                 fill.color = new Color(c.r * 0.30f, c.g * 0.30f, c.b * 0.30f, 0.96f);
                 border.color = c;
+                if (PixelSkin.SlotHighlight != null) { PixelSkin.Apply(border, PixelSkin.SlotHighlight, Color.Lerp(c, Color.white, 0.15f), 2f); border.fillCenter = false; }   // 등급 색 도트 틀 - 테두리만 (가운데를 채우면 아이콘을 덮는다)
 
                 icon.sprite = _item.Def.icon;
                 icon.enabled = icon.sprite != null;
 
                 // 아이콘이 있으면 이름은 아래에 작게, 없으면 칸 전체에 크게
                 bool hasIcon = icon.enabled;
-                label.text = _item.Def.displayName;
+                // 도트 아이콘이 있으면 이름은 감춘다 - 이름이 그림을 덮었다 (설명창에 나온다)
+                label.text = hasIcon ? "" : _item.Def.displayName;
                 label.alignment = hasIcon ? TextAlignmentOptions.Bottom : TextAlignmentOptions.Center;
                 float k = _panel.CellSize / 56f;      // 칸 크기를 키우면 글자도 같이 커져야 한다
                 label.fontSizeMax = (hasIcon ? 12f : 15f) * k;

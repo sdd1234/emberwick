@@ -20,12 +20,21 @@ namespace Capstone.Combat
         [SerializeField] private float pulseAmount = 0.14f;
         [SerializeField] private float pulseSpeed = 14f;
 
+        /// <summary>날아가는 중인 적 투사체. 도적이 피하는 데 쓴다.</summary>
+        public static readonly System.Collections.Generic.List<EnemyProjectile> Flying = new();
+        private void OnEnable() => Flying.Add(this);
+        private void OnDisable() => Flying.Remove(this);
+        public Vector2 Direction => _direction;
+        public float Speed => speed;
+        public GameObject Owner => _owner;
+
         private SpriteRenderer _sprite;
         private Vector3 _baseScale;
 
         private float _damage;
         private Vector2 _direction;
         private GameObject _owner;
+        private Core.FactionMember _ownerFaction;
 
         private void Awake()
         {
@@ -41,8 +50,16 @@ namespace Capstone.Combat
             }
         }
 
+        private float _trailAt;
+
         private void Update()
         {
+            // 짧고 어두운 꼬리 불티 - 불빛 밖에서 '뭔가 날아온다' 정도만 읽힌다 (공포 쪽)
+            if (_direction != Vector2.zero && Time.time >= _trailAt)
+            {
+                _trailAt = Time.time + 0.04f;
+                FX.PixelFX.Burst((Vector2)transform.position - _direction * 0.15f, -_direction, glowColor * 0.6f, new Color(0.25f, 0.03f, 0.03f), 1, 0.5f, 20f, false, 0.14f);
+            }
             // 살아있는 것처럼 맥동시켜 눈에 띄게 한다
             if (_sprite == null || pulseAmount <= 0f) return;
             float k = 1f + Mathf.Sin(Time.time * pulseSpeed) * pulseAmount;
@@ -54,8 +71,11 @@ namespace Capstone.Combat
             _direction = direction.normalized;
             _damage = damage;
             _owner = owner;
+            _ownerFaction = owner != null ? owner.GetComponent<Core.FactionMember>() : null;
             GetComponent<Rigidbody2D>().linearVelocity = _direction * speed;
             Destroy(gameObject, lifetime);
+            // 쏘는 순간 총구에서 불티가 튄다 - 화면 밖 사수도 번쩍임으로 위치가 드러난다
+            FX.PixelFX.Burst(transform.position, _direction, glowColor, Color.white, 6, 4f, 25f, false, 0.2f);
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -63,9 +83,13 @@ namespace Capstone.Combat
             // 허트박스는 자식 오브젝트라서 == 비교로는 자기 자신을 못 거른다
             if (_owner != null && other.transform.IsChildOf(_owner.transform)) return;
             if ((hitMask.value & (1 << other.gameObject.layer)) == 0) return;
+            // 같은 편은 지나간다 - 조원 등 뒤에서 쏴도 조원이 맞지 않는다
+            var them = other.GetComponentInParent<Core.FactionMember>();
+            if (them != null && _ownerFaction != null && them.Faction == _ownerFaction.Faction) return;
 
             var health = other.GetComponentInParent<Health>();
-            if (health != null && !health.IsDead) health.TakeDamage(_damage, _direction);
+            if (health != null && !health.IsDead) health.TakeDamage(_damage, _direction, DamageType.Physical, _owner);
+            else FX.PixelFX.Burst(transform.position, -_direction, glowColor, Color.white, 10, 4f, 70f, true, 0.35f);   // 벽에 터진다
 
             Destroy(gameObject);
         }

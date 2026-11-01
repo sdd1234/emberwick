@@ -288,8 +288,8 @@ MonoBehaviour:
   m_NormalMapQuality: 2
   m_UseNormalMap: 0
   m_ShadowsEnabled: 1
-  m_ShadowIntensity: 0.95
-  m_ShadowSoftness: 0.3
+  m_ShadowIntensity: 0.9
+  m_ShadowSoftness: 0.6
   m_ShadowSoftnessFalloffIntensity: 0.5
   m_ShadowVolumeIntensityEnabled: 0
   m_ShadowVolumeIntensity: 0.75
@@ -423,6 +423,10 @@ GameObject:
   - component: {fileID: 6732425603757774391}
   - component: {fileID: 4410370783099668607}
   - component: {fileID: 4680583299355334170}
+  - component: {fileID: 6754507130155111435}
+  - component: {fileID: 610798944453508180}
+  - component: {fileID: 6553277629949649233}
+  - component: {fileID: 4930178071967371845}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -550,6 +554,9 @@ MonoBehaviour:
   maxRaidMinutes: 20
   burnTimeRatio: 0.8
   matchlockShotCost: 2
+  weakDrain: 0.5
+  strongDrain: 1.25
+  litLevel: 2
 --- !u!114 &3541215135376698142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -665,6 +672,18 @@ MonoBehaviour:
   rotateLerp: 18
   transitionLerp: 8
   coneAngleOffset: -90
+  weakRangeT: 0.45
+  coneIntensityWeak: 0.75
+  lanternColor: {r: 1, g: 0.82, b: 0.52, a: 1}
+  unlitColor: {r: 0.62, g: 0.7, b: 0.95, a: 1}
+  useCone: 0
+  lanternRadiusLit: 6.5
+  lanternRadiusWeak: 5.2
+  swayMeters: 0.14
+  swayBob: 0.06
+  swayCycleMeters: 2.2
+  flicker: 0.08
+  radiusBreath: 0.025
 --- !u!70 &8171957199735838990
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -731,7 +750,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3591958901002416292}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a415174603aac947b00e8a607e343ef, type: 3}
   m_Name: 
@@ -962,6 +981,94 @@ MonoBehaviour:
   bandage: {fileID: 11400000, guid: 2a90ab85f0e233a4c863d14aba246ad1, type: 2}
   key: 22
   inventory: {fileID: 0}
+--- !u!114 &6754507130155111435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dac2f3b60d2b620419f1d32889dc4fd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.PlayerPixelAnimator
+  target: {fileID: 1191370614414031200}
+  idle:
+  - {fileID: 21300000, guid: 04292c17ebc00a847a0781363076f5d1, type: 3}
+  walk:
+  - {fileID: 21300000, guid: 76ecaffde6778f644bd2d2149c659dac, type: 3}
+  - {fileID: 21300000, guid: 8ede3cdec0b50d14d98b228621486019, type: 3}
+  - {fileID: 21300000, guid: 9823fc53466d506438cda47e6e602639, type: 3}
+  - {fileID: 21300000, guid: 58cedcac734ae44449cbb486289e3429, type: 3}
+  - {fileID: 21300000, guid: de5de8a9338d49e48b6230a569259cf8, type: 3}
+  - {fileID: 21300000, guid: 46579c1540f166141ab2b3bcbb279d65, type: 3}
+  aim: {fileID: 21300000, guid: 0d06336a1e8c95a4290ff9215b4c8909, type: 3}
+  roll:
+  - {fileID: 21300000, guid: 6d06d4331f5e0984e80f0a731208e771, type: 3}
+  - {fileID: 21300000, guid: 1db85bb23da8cca4da26840f753b1f72, type: 3}
+  - {fileID: 21300000, guid: 6ac9809b1ab1f7442a6e72556cc41dfa, type: 3}
+  - {fileID: 21300000, guid: e6f2d20dff544a14ab639bdb290a3a4e, type: 3}
+  rollSeconds: 0.35
+  hurt:
+  - {fileID: 21300000, guid: 18c305fe360261945a948044fe6e0780, type: 3}
+  - {fileID: 21300000, guid: a98bc9039e0385245aaf66a22f005fb7, type: 3}
+  hurtSeconds: 0.22
+  walkFps: 7
+  runFps: 11
+  cycleMeters: 2.2
+  walkBob: 000000000000000000000000000000000000000000000000
+  breathPeriod: 1.4
+--- !u!114 &610798944453508180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16224029654f934da1301bc7f35fa37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Core.FactionMember
+  faction: 0
+--- !u!114 &6553277629949649233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3ee119ec96fe1e409bd6e070a66e371, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Player.LightFlaskThrower
+  fuelCost: 15
+  damage: 42
+  radius: 2.6
+  maxRange: 9
+  cooldown: 1.2
+  lingerSeconds: 5
+  flaskSprite: {fileID: 21300000, guid: 5f48f83233ab2524f83f18cc0c286abb, type: 3}
+  wispSprite: {fileID: 21300000, guid: c167f1f34bdb7fd4188ad8eeae49f411, type: 3}
+  glow: {r: 1, g: 0.88, b: 0.55, a: 1}
+--- !u!114 &4930178071967371845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3591958901002416292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c98d8c9eb997f3a4397997b87e34c971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.FX.HitFeel
+  bloodA: {r: 0.55, g: 0.04, b: 0.05, a: 1}
+  bloodB: {r: 0.85, g: 0.12, b: 0.1, a: 1}
+  knockback: 2.2
+  hitStop: 0.05
 --- !u!1 &4835298272245046183
 GameObject:
   m_ObjectHideFlags: 0
@@ -1064,7 +1171,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3645613828287668783}
@@ -1118,7 +1225,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 0690dc4f08497be4d9d4ec519e14b90d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 04292c17ebc00a847a0781363076f5d1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

@@ -75,6 +75,7 @@ namespace Capstone.EditorTools
             var player = BuildPlayer();
             var canvas = BuildCanvas();
             BuildScreen(canvas, gateZone, player);
+            PixelTownDresser.Dress();          // 2026-10-29 - 블록 건물 · 원화 바닥을 도트 그림으로 바꾼다
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -116,11 +117,11 @@ namespace Capstone.EditorTools
             go.AddComponent<Player.CameraFollow>();
             go.transform.position = new Vector3(SpawnPos.x, SpawnPos.y + 1f, -10f);
 
-            // 마을은 낮이다 - 레이드와 달리 전역광을 그대로 켠다
+            // 마을은 저녁이다 - 차갑고 어둡게, 불빛 둘레만 따뜻하게 (PixelTownDresser.ApplyDusk 와 같은 값)
             var light = new GameObject("Global Light 2D").AddComponent<Light2D>();
             light.lightType = Light2D.LightType.Global;
-            light.intensity = 1f;
-            light.color = new Color(1f, 0.97f, 0.92f);
+            light.intensity = 0.58f;
+            light.color = new Color(0.62f, 0.68f, 0.86f);
         }
 
         private static void BuildEventSystem()
@@ -489,6 +490,13 @@ namespace Capstone.EditorTools
             prt.anchorMin = prt.anchorMax = new Vector2(1f, 0.5f);
             prt.pivot = new Vector2(1f, 0.5f);
             prt.anchoredPosition = new Vector2(-16f, 0f);
+
+            // 2026-10-30 - 도트 칸 틀 · Galmuri11 Bold (씬 글자는 PixelTownDresser 가 맞추지만 프리팹은 따로)
+            var slot = Resources.Load<Sprite>("PixelUI/ui_slot");
+            if (slot != null) UI.PixelSkin.Apply(img, slot, new Color(0.9f, 0.86f, 0.8f), 2f);
+            var font = PixelFontSetup.MainFont;
+            if (font != null)
+                foreach (var t in new[] { n, p }) { t.font = font; t.fontSharedMaterial = font.material; t.fontSize = 24f; t.fontStyle &= ~FontStyles.Bold; }
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(row.gameObject, BuyRowPrefab);
             Object.DestroyImmediate(row.gameObject);

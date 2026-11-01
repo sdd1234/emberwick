@@ -38,15 +38,69 @@ namespace Capstone.Enemy
         [Tooltip("지점마다 서서 둘러보는 시간 (초)")]
         [SerializeField] private float patrolPause = 1.5f;
 
+        [Header("대응수단 (피드백 - 감염자에게 대응수단이 있으나 모두가 쓰는 건 아니다)")]
+        [Tooltip("횃불을 든 이교도만 켠다. 감염자를 만나면 석궁 대신 화염병을 던진다")]
+        [SerializeField] private bool throwsFireFlask = false;
+        [SerializeField] private float flaskDamage = 30f;
+        [SerializeField] private float flaskCooldown = 5.5f;
+        [SerializeField] private Sprite flaskSprite;
+
         private int _patrolIndex;
         private float _patrolWaitUntil;
+        private float _nextFlaskAt;
+
+        // ---------- 명령 (교대 · 후퇴 · 증원 - CultistSquad 가 내린다) ----------
+        private bool _hasOrder;
+        private Vector2 _orderGoal;
+        private float _orderSpeed;
+        private bool _orderIgnoresCombat;
+        private System.Action<RangedEnemy> _onArrive;
+
+        /// <summary>그 자리로 가라. ignoreCombat 이면 싸움보다 이동이 먼저다 (후퇴).</summary>
+        public void Order(Vector2 goal, float speed, bool ignoreCombat, System.Action<RangedEnemy> onArrive)
+        {
+            _hasOrder = true;
+            _orderGoal = goal;
+            _orderSpeed = speed;
+            _orderIgnoresCombat = ignoreCombat;
+            _onArrive = onArrive;
+        }
+        public void ClearOrder() { _hasOrder = false; _onArrive = null; }
+        public bool HasOrder => _hasOrder;
+        public Vector2[] PatrolPoints => patrolPoints;
+        public RangedEnemy PatrolLeader => patrolLeader;
+        public bool ThrowsFireFlask { get => throwsFireFlask; set => throwsFireFlask = value; }
+        public bool InCombat => State == AlertState.Alerted;
+        public new Vector2 Position => base.Position;
+
+        private bool TickOrder()
+        {
+            if (!_hasOrder) return false;
+            if (!_orderIgnoresCombat && State == AlertState.Alerted) return false;   // 싸움이 나면 명령은 잠시 미룬다
+            if (Vector2.Distance(Position, _orderGoal) <= 0.8f)
+            {
+                Stop();
+                var cb = _onArrive;
+                _hasOrder = false;
+                _onArrive = null;
+                cb?.Invoke(this);
+                return true;
+            }
+            MoveAlongPathTo(_orderGoal, _orderSpeed);
+            return true;
+        }
 
         /// <summary>순찰로 설정 (맵 빌더가 부른다).</summary>
-        public void SetPatrol(Vector2[] points, RangedEnemy leader)
+        public void SetPatrol(Vector2[] points, RangedEnemy leader, float side = 1f)
         {
             patrolPoints = points;
             patrolLeader = leader;
+            followSide = side;
+            _patrolIndex = 0;
         }
+
+        [Tooltip("조장 뒤에서 어느 쪽 어깨에 서는가 (+1 / -1). 셋이 다닐 때 겹치지 않게")]
+        [SerializeField] private float followSide = 1f;
 
         /// <summary>조준 진행도 0~1. 조준 중이 아니면 -1.</summary>
         public float AimProgress
@@ -67,6 +121,8 @@ namespace Capstone.Enemy
                 return;
             }
 
+            if (TickOrder()) return;
+
             if (State != AlertState.Alerted)
             {
                 if (State == AlertState.Suspicious) MoveAlongPathTo(ChaseTarget, 0.4f);
@@ -76,21 +132,28 @@ namespace Capstone.Enemy
 
             // 쏠 자리가 안 나오면 사거리 유지보다 시야 확보가 먼저다.
             // 벽 뒤에서 거리만 맞춰 놓고 벽에 대고 겨누는 게 예전 동작이었다
-            if (!CanSeePlayer) { MoveAlongPathTo(ChaseTarget); return; }
+            if (!CanSeeTarget) { MoveAlongPathTo(ChaseTarget); return; }
+
+            // 감염자 - 화살은 거의 안 먹는다. 화염병을 가진 이교도만 맞서고, 나머지는 거리를 벌리며 쏜다
+            if (!TargetIsPlayer && Foe != null && Foe.Faction == Core.Faction.Infected && throwsFireFlask && Time.time >= _nextFlaskAt && DistanceToTarget <= 9f)
+            {
+                ThrowFlask();
+                return;
+            }
 
             // 거리 관리
-            if (DistanceToPlayer < retreatRange)
+            if (DistanceToTarget < retreatRange)
             {
                 // 붙었다고 물러나기만 하면 그냥 맞아준다.
                 // 물러나되 쏠 때가 되면 쏜다. 물러날 곳이 없으면 그 자리에서 쏜다
-                Vector2 away = ((Vector2)transform.position - (Vector2)Player.position).normalized;
+                Vector2 away = ((Vector2)transform.position - TargetPosition).normalized;
                 if (!MoveAwayFrom(away, 0.9f)) Stop();
                 TryStartAim();
                 return;
             }
-            else if (DistanceToPlayer > preferredRange + rangeTolerance)
+            else if (DistanceToTarget > preferredRange + rangeTolerance)
             {
-                MoveAlongPathTo(Player.position);
+                MoveAlongPathTo(TargetPosition);
             }
             else
             {
@@ -131,7 +194,7 @@ namespace Capstone.Enemy
                 Vector2 heading = patrolLeader.Body != null && patrolLeader.Body.linearVelocity.sqrMagnitude > 0.01f
                     ? patrolLeader.Body.linearVelocity.normalized
                     : (lp - Position).normalized;
-                Vector2 slot = lp - heading * followDistance + Vector2.Perpendicular(heading) * 0.6f;
+                Vector2 slot = lp - heading * followDistance + Vector2.Perpendicular(heading) * 0.9f * followSide;
 
                 if (Vector2.Distance(Position, slot) < 0.4f) Stop();
                 else MoveAlongPathTo(slot, Vector2.Distance(Position, slot) > followDistance * 2f ? patrolSpeed * 1.5f : patrolSpeed);
@@ -155,10 +218,22 @@ namespace Capstone.Enemy
         private void TryStartAim()
         {
             if (Time.time < _nextFireAt) return;
-            if (!CanSeePlayer) return;                       // 벽에 대고 겨누지 않는다
-            _aimSnapshot = Player.position;                  // 조준 시작 시점의 위치를 기억
+            if (!CanSeeTarget) return;                       // 벽에 대고 겨누지 않는다
+            _aimSnapshot = TargetPosition + Vector2.up * 0.9f;   // 조준 시작 시점의 위치를 기억 (가슴 높이)
             _fireAt = Time.time + aimTime;
             _nextFireAt = Time.time + fireCooldown + aimTime;
+        }
+
+        private void ThrowFlask()
+        {
+            _nextFlaskAt = Time.time + flaskCooldown;
+            Stop();
+            EnemyBark.Say(this, "불로 태워라!", new Color(1f, 0.55f, 0.3f), 4f);
+            Combat.ThrownFlask.Throw(new Combat.ThrownFlask.Spec
+            {
+                type = Combat.DamageType.Fire, damage = flaskDamage, radius = 2.2f,
+                glow = new Color(1f, 0.45f, 0.18f), lingerSeconds = 2.4f, noise = 8f, sprite = flaskSprite,
+            }, Position + Vector2.up * 1.3f, TargetPosition, gameObject);
         }
 
         private void Fire()
@@ -182,6 +257,8 @@ namespace Capstone.Enemy
 
             var proj = Instantiate(projectilePrefab, origin, Quaternion.identity);
             proj.Launch(dir, projectileDamage, gameObject);
+            FX.SfxBank.Play("enemy_shot", origin, 0.75f);
+            EmitCombatNoise();
         }
     }
 }

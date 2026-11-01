@@ -143,6 +143,8 @@ namespace Capstone.Player
             // 입력이 없으면 조준 방향으로 구른다
             _rollDirection = IsMoving ? MoveInput : AimDirection;
             IsRolling = true;
+            FX.SfxBank.Play("dodge", transform.position, 0.6f);
+            FX.Vfx.Play("vfx_dust", (Vector2)transform.position + Vector2.up * 0.25f, _rollDirection.x > 0f, 20);
             _rollEndTime = Time.time + rollDuration;
             _rollReadyTime = _rollEndTime + rollCooldown;
             if (invulnerableWhileRolling && health != null) health.Invulnerable = true;

@@ -134,6 +134,7 @@ namespace Capstone.Items
                 s.Identified = true;
                 revealed = true;
                 OnSlotIdentified?.Invoke(s);
+                RevealFx(s);
             }
 
             // 격자 자체는 안 바뀌었지만 표시는 바뀌었다.
@@ -142,6 +143,15 @@ namespace Capstone.Items
         }
 
         public void StopSearching() => IsBeingSearched = false;
+
+        /// <summary>
+        /// 물건 하나가 드러날 때 - 뒤적이는 먼지 몇 점만 (공포 쪽 연출 - 등급 빛가루는 파밍 게임 문법이라 뺐다, 등급은 가방 색으로 읽힌다).
+        /// </summary>
+        private void RevealFx(GridItem s)
+        {
+            Vector2 at = (Vector2)transform.position + Vector2.up * 0.5f;
+            FX.PixelFX.Burst(at, Vector2.up, new Color(0.34f, 0.3f, 0.26f), new Color(0.55f, 0.5f, 0.42f), 3, 2f, 60f, true, 0.3f);
+        }
 
         /// <summary>드래그로 가져갈 때 호출. 식별 안 된 물건은 못 가져간다.</summary>
         public bool CanTake(GridItem item) => item != null && item.Identified;

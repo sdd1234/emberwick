@@ -173,7 +173,7 @@ MonoBehaviour:
   lifetime: 3
   hitMask:
     serializedVersion: 2
-    m_Bits: 1280
+    m_Bits: 1792
   glowColor: {r: 1, g: 0.28, b: 0.22, a: 1}
   pulseAmount: 0.14
   pulseSpeed: 14

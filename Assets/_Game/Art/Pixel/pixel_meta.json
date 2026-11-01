@@ -1,0 +1,2136 @@
+{
+ "_ppu": {
+  "hero": 38.0,
+  "hero_walk": 38.0,
+  "hero_aim": 40.40816326530612,
+  "cultist_idle": 38.0,
+  "rogue_idle": 37.77777777777778,
+  "infected_idle": 29.35483870967742,
+  "lamppost": 37.95454545454545,
+  "trees": 38.05555555555556,
+  "bushes": 37.6,
+  "thorns": 38.125,
+  "props": 38.0,
+  "camp_props": 37.77777777777778,
+  "small_items": 37.77777777777778,
+  "cultist_walk": 38.4,
+  "cultist_shoot": 38.0,
+  "rogue_walk": 38.2608695652174,
+  "rogue_attack": 37.77777777777778,
+  "infected_walk": 38.387096774193544,
+  "infected_attack": 38.18181818181819,
+  "corpses": 38.333333333333336,
+  "hero_roll": 38.0,
+  "hide_bush": 38.07692307692307,
+  "vfx_slash": 38.0,
+  "vfx_impact": 38.0,
+  "vfx_resist": 38.0,
+  "vfx_light_burst": 38.0,
+  "vfx_fire_burst": 38.0,
+  "vfx_dust": 38.0,
+  "vfx_blood": 38.0,
+  "vfx_smoke": 38.0,
+  "vfx_harvest": 38.0,
+  "vfx_muzzle": 38.0,
+  "hero_walk6": 38.4,
+  "town_smithy": 38.0,
+  "town_general": 38.0,
+  "town_infirmary": 38.0,
+  "town_props": 38.0,
+  "town_gate": 38.0,
+  "cultist_attack5": 38.0,
+  "hurt_hero": 37.95918367346938,
+  "hurt_cultist": 38.367346938775505,
+  "hurt_rogue": 42.72727272727273,
+  "hurt_infected": 38.0,
+  "house_furn": 37.39130434782609
+ },
+ "hero_idle": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 48,
+  "h": 95
+ },
+ "hero_walk_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 60,
+  "h": 95
+ },
+ "hero_walk_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 60,
+  "h": 95
+ },
+ "hero_walk_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 60,
+  "h": 95
+ },
+ "hero_walk_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 60,
+  "h": 95
+ },
+ "hero_aim": {
+  "ppu": 40.408,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 94,
+  "h": 99
+ },
+ "cultist_idle": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 68,
+  "h": 95
+ },
+ "rogue_idle": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 72,
+  "h": 85
+ },
+ "infected_idle": {
+  "ppu": 29.355,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 91
+ },
+ "lamppost_lit": {
+  "ppu": 37.955,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 167
+ },
+ "lamppost_unlit": {
+  "ppu": 37.955,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 167
+ },
+ "tree_spruce_big": {
+  "ppu": 38.056,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 180,
+  "h": 274
+ },
+ "tree_spruce_small": {
+  "ppu": 38.056,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 112,
+  "h": 172
+ },
+ "tree_dead": {
+  "ppu": 38.056,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 176,
+  "h": 263
+ },
+ "bush_fern_a": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 52,
+  "h": 47
+ },
+ "bush_leaf_a": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 47,
+  "h": 37
+ },
+ "bush_grass": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 38,
+  "h": 44
+ },
+ "bush_stump": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 45,
+  "h": 34
+ },
+ "bush_leaf_b": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 47,
+  "h": 44
+ },
+ "bush_fern_b": {
+  "ppu": 37.6,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 46,
+  "h": 44
+ },
+ "thorn_a": {
+  "ppu": 38.125,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 97,
+  "h": 61
+ },
+ "thorn_b": {
+  "ppu": 38.125,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 45,
+  "h": 57
+ },
+ "thorn_c": {
+  "ppu": 38.125,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 51,
+  "h": 51
+ },
+ "thorn_d": {
+  "ppu": 38.125,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 112,
+  "h": 63
+ },
+ "prop_chest": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 39,
+  "h": 38
+ },
+ "prop_strongbox": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 38,
+  "h": 38
+ },
+ "prop_reliquary": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 32,
+  "h": 47
+ },
+ "prop_apothecary": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 42,
+  "h": 57
+ },
+ "prop_sack": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 32,
+  "h": 38
+ },
+ "prop_rack": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 35,
+  "h": 72
+ },
+ "prop_cart": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 69,
+  "h": 46
+ },
+ "prop_campfire": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 49,
+  "h": 34
+ },
+ "prop_tent": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 70,
+  "h": 71
+ },
+ "prop_barrel": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 52,
+  "h": 40
+ },
+ "prop_crates": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 47,
+  "h": 54
+ },
+ "prop_grave_a": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 32,
+  "h": 48
+ },
+ "prop_grave_b": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 28,
+  "h": 52
+ },
+ "prop_grave_c": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 30,
+  "h": 42
+ },
+ "prop_well": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 47,
+  "h": 58
+ },
+ "prop_wheel": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 48,
+  "h": 46
+ },
+ "item_torch": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 13,
+  "h": 34
+ },
+ "item_bolt": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 25,
+  "h": 6
+ },
+ "item_flask": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 14,
+  "h": 22
+ },
+ "item_wisp": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 16,
+  "h": 20
+ },
+ "tile_forest": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 105,
+  "h": 105
+ },
+ "tile_dirt": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "hud_lantern_frame": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "hud_lantern_glass": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "hud_flame": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "hud_halo": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "thorn_wall": {
+  "ppu": 38.125,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 112,
+  "h": 63
+ },
+ "tile_stone": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "tile_wood": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "tile_wall": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "tile_dirt_h": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "cultist_walk_0": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 72,
+  "h": 96
+ },
+ "cultist_walk_1": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 72,
+  "h": 96
+ },
+ "cultist_walk_2": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 72,
+  "h": 96
+ },
+ "cultist_walk_3": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 72,
+  "h": 96
+ },
+ "cultist_aim": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 86,
+  "h": 95
+ },
+ "cultist_reload": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 86,
+  "h": 95
+ },
+ "rogue_walk_0": {
+  "ppu": 38.261,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 80,
+  "h": 88
+ },
+ "rogue_walk_1": {
+  "ppu": 38.261,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 80,
+  "h": 88
+ },
+ "rogue_walk_2": {
+  "ppu": 38.261,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 80,
+  "h": 88
+ },
+ "rogue_walk_3": {
+  "ppu": 38.261,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 80,
+  "h": 88
+ },
+ "rogue_windup": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 128,
+  "h": 85
+ },
+ "rogue_stab": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 128,
+  "h": 85
+ },
+ "rogue_dodge": {
+  "ppu": 37.778,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 128,
+  "h": 85
+ },
+ "infected_walk_0": {
+  "ppu": 38.387,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 98,
+  "h": 119
+ },
+ "infected_walk_1": {
+  "ppu": 38.387,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 98,
+  "h": 119
+ },
+ "infected_walk_2": {
+  "ppu": 38.387,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 98,
+  "h": 119
+ },
+ "infected_walk_3": {
+  "ppu": 38.387,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 98,
+  "h": 119
+ },
+ "infected_raise": {
+  "ppu": 38.182,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 126,
+  "h": 126
+ },
+ "infected_slam": {
+  "ppu": 38.182,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 126,
+  "h": 126
+ },
+ "corpse_cultist": {
+  "ppu": 38.333,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 96,
+  "h": 46
+ },
+ "corpse_rogue": {
+  "ppu": 38.333,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 87,
+  "h": 40
+ },
+ "corpse_infected": {
+  "ppu": 38.333,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 109,
+  "h": 65
+ },
+ "ui_portrait": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 120,
+  "h": 121
+ },
+ "ui_portrait_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 120,
+  "h": 121
+ },
+ "ui_bar_health": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 268,
+  "h": 50
+ },
+ "ui_bar_health_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 268,
+  "h": 50
+ },
+ "ui_panel": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 132,
+  "h": 43
+ },
+ "ui_keycap": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 31,
+  "h": 30
+ },
+ "ui_plaque": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 91,
+  "h": 49
+ },
+ "ui_medal": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 37,
+  "h": 40
+ },
+ "icon_bleed": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 24,
+  "h": 26
+ },
+ "icon_infect": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 27,
+  "h": 27
+ },
+ "icon_eye_open": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 25,
+  "h": 23
+ },
+ "icon_eye_closed": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 25,
+  "h": 23
+ },
+ "icon_bolt": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 26,
+  "h": 18
+ },
+ "icon_crossbow": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 33,
+  "h": 26
+ },
+ "icon_flask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 20,
+  "h": 28
+ },
+ "icon_bandage": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 25,
+  "h": 22
+ },
+ "icon_lantern": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 17,
+  "h": 30
+ },
+ "icon_bag": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 26,
+  "h": 26
+ },
+ "ui_bar_stamina": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 191,
+  "h": 40
+ },
+ "ui_bar_stamina_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 191,
+  "h": 40
+ },
+ "ui_bar_status": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 29
+ },
+ "ui_bar_status_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 29
+ },
+ "hero_portrait": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_portrait_small": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_portrait_small_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_bar2_health": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 221,
+  "h": 26
+ },
+ "ui_bar2_health_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 221,
+  "h": 26
+ },
+ "ui_bar2_stamina": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 131,
+  "h": 24
+ },
+ "ui_bar2_stamina_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 131,
+  "h": 24
+ },
+ "ui_bar2_status": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 52,
+  "h": 23
+ },
+ "ui_bar2_status_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 52,
+  "h": 23
+ },
+ "ui_portrait2": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 87,
+  "h": 84
+ },
+ "ui_portrait2_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 87,
+  "h": 84
+ },
+ "ui_portrait2_small": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_portrait2_small_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_panel2": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 157,
+  "h": 39
+ },
+ "ui_keycap2": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 31,
+  "h": 31
+ },
+ "ui_plaque2": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 88,
+  "h": 38
+ },
+ "alert_bang": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 29,
+  "h": 72
+ },
+ "alert_question": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 48,
+  "h": 72
+ },
+ "hero_roll_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 64,
+  "h": 65
+ },
+ "hero_roll_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 64,
+  "h": 65
+ },
+ "hero_roll_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 64,
+  "h": 65
+ },
+ "hero_roll_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 64,
+  "h": 65
+ },
+ "hide_bush_a": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 106,
+  "h": 99
+ },
+ "hide_bush_b": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 105,
+  "h": 94
+ },
+ "hide_bush_c": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 106,
+  "h": 94
+ },
+ "hide_bush_rustle": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 109,
+  "h": 99
+ },
+ "vfx_slash_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_slash_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_slash_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_slash_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_slash_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_slash_x5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 34,
+  "h": 32
+ },
+ "vfx_impact_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_impact_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_impact_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_impact_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_impact_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_impact_x5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 38,
+  "h": 38
+ },
+ "vfx_impact_x6": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 38,
+  "h": 38
+ },
+ "vfx_resist_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_resist_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_resist_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_resist_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_resist_x4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 44,
+  "h": 46
+ },
+ "vfx_light_burst_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_light_burst_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_light_burst_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_light_burst_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_light_burst_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_light_burst_5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_fire_burst_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_fire_burst_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_fire_burst_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_dust_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_dust_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_dust_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_dust_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_dust_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_blood_x5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 52,
+  "h": 42
+ },
+ "vfx_blood_x6": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 52,
+  "h": 42
+ },
+ "vfx_smoke_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_smoke_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_smoke_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_smoke_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_smoke_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_smoke_5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_harvest_x6": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 24,
+  "h": 26
+ },
+ "vfx_muzzle_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_muzzle_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_muzzle_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_muzzle_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_muzzle_x4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 42,
+  "h": 20
+ },
+ "vfx_fire_burst_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_fire_burst_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "vfx_fire_burst_5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "tel_pattern": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "tel_reticle_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "tel_reticle_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "tel_reticle_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "tel_reticle_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "hero_walk6_0": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "hero_walk6_1": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "hero_walk6_2": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "hero_walk6_3": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "hero_walk6_4": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "hero_walk6_5": {
+  "ppu": 38.4,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 58,
+  "h": 96
+ },
+ "town_smithy": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 243,
+  "h": 138
+ },
+ "town_general": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 232,
+  "h": 155
+ },
+ "town_infirmary": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 233,
+  "h": 148
+ },
+ "town_prop_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 92,
+  "h": 94
+ },
+ "town_prop_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 56,
+  "h": 81
+ },
+ "town_prop_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 50,
+  "h": 65
+ },
+ "town_prop_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 46,
+  "h": 35
+ },
+ "town_prop_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 30,
+  "h": 59
+ },
+ "town_prop_5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 31,
+  "h": 59
+ },
+ "town_gate": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 234,
+  "h": 141
+ },
+ "tile_cobble": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 96,
+  "h": 96
+ },
+ "cultist_attack5_0": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "cultist_attack5_1": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "cultist_attack5_2": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "cultist_attack5_3": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "cultist_attack5_4": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "cultist_attack5_x5": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 82,
+  "h": 95
+ },
+ "hurt_hero_0": {
+  "ppu": 37.959,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 94,
+  "h": 93
+ },
+ "hurt_hero_1": {
+  "ppu": 37.959,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 94,
+  "h": 93
+ },
+ "hurt_cultist": {
+  "ppu": 38.367,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 78,
+  "h": 94
+ },
+ "hurt_rogue": {
+  "ppu": 42.727,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 94,
+  "h": 94
+ },
+ "hurt_infected": {
+  "ppu": 38.0,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 104,
+  "h": 114
+ },
+ "icon_item_bandage": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "icon_item_bolt": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "icon_item_catalyst": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "icon_item_gunpowder": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "icon_item_oil": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "alert_bang_mask": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 29,
+  "h": 72
+ },
+ "icon_item_plagueheart": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "icon_item_silvercross": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ]
+ },
+ "ui_slot": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 33,
+  "h": 31
+ },
+ "ui_slot_hi": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 34,
+  "h": 32
+ },
+ "ui_window": {
+  "ppu": 100.0,
+  "pivot": [
+   0.5,
+   0.5
+  ],
+  "w": 79,
+  "h": 61
+ },
+ "hide_bush_a_leanL2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 99
+ },
+ "hide_bush_a_leanL1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 99
+ },
+ "hide_bush_a_leanR1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 99
+ },
+ "hide_bush_a_leanR2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 99
+ },
+ "hide_bush_b_leanL2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 117,
+  "h": 94
+ },
+ "hide_bush_b_leanL1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 117,
+  "h": 94
+ },
+ "hide_bush_b_leanR1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 117,
+  "h": 94
+ },
+ "hide_bush_b_leanR2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 117,
+  "h": 94
+ },
+ "hide_bush_c_leanL2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 94
+ },
+ "hide_bush_c_leanL1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 94
+ },
+ "hide_bush_c_leanR1": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 94
+ },
+ "hide_bush_c_leanR2": {
+  "ppu": 38.077,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 118,
+  "h": 94
+ },
+ "furn_table": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 61,
+  "h": 43
+ },
+ "furn_chair": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 31,
+  "h": 52
+ },
+ "furn_bed": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 52,
+  "h": 63
+ },
+ "furn_shelf": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 44,
+  "h": 72
+ },
+ "furn_fireplace": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 55,
+  "h": 75
+ },
+ "furn_jars": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 46,
+  "h": 52
+ },
+ "furn_chair_fallen": {
+  "ppu": 37.391,
+  "pivot": [
+   0.5,
+   0.0
+  ],
+  "w": 59,
+  "h": 39
+ }
+}

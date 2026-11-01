@@ -12,11 +12,13 @@ GameObject:
   - component: {fileID: 7620081716627172702}
   - component: {fileID: 4025251782566670995}
   - component: {fileID: 905456226332595948}
-  - component: {fileID: 2972047317538855575}
   - component: {fileID: 1302437176652613338}
   - component: {fileID: 8219713873070809557}
   - component: {fileID: 5804473830820657676}
   - component: {fileID: 5514904673262312116}
+  - component: {fileID: 2679235922735820269}
+  - component: {fileID: 1133843392353639446}
+  - component: {fileID: 657895522637121969}
   m_Layer: 9
   m_Name: Enemy_Rogue
   m_TagString: Untagged
@@ -118,7 +120,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 401676841c9718144b40104c91f3c346, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a52abbb6ce7cf3b439ba639731819c00, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -140,58 +142,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e45c04c3f556fac4d9ff1091c669be57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Combat.Health
-  maxHealth: 50
+  maxHealth: 55
   destroyOnDeath: 0
   deathDelay: 0
---- !u!114 &2972047317538855575
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 414121820723608735}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 830fcbe96bb7994459658c92807f2492, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.MeleeEnemy
-  senseMode: 0
-  noticeRadius: 3
-  sightConeRange: 7
-  sightConeAngle: 100
-  canHear: 1
-  hearingMultiplier: 1
-  keepChasingOnceSeen: 0
-  giveUpDistance: 25
-  suspectRange: 25
-  detectRange: 15
-  unlitRangeMultiplier: 0.25
-  litAlertRadius: 0
-  sightBlockMask:
-    serializedVersion: 2
-    m_Bits: 1024
-  loseInterestTime: 4
-  moveSpeed: 3
-  turnSmoothing: 12
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  agentRadius: 0.8
-  wallClearance: 0.95
-  repathInterval: 0.4
-  waypointReach: 0.4
-  stuckGrace: 0.45
-  unstickDuration: 0.5
-  spriteRenderer: {fileID: 0}
-  attackRange: 1.8000001
-  attackArcDegrees: 110
-  attackDamage: 15
-  attackCooldown: 1.1
-  windUp: 0.3
-  infectionPerHit: 0
-  bleedChance: 0.5
-  wanderRadius: 3
-  wanderInterval: 2.5
 --- !u!114 &1302437176652613338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -214,6 +167,7 @@ MonoBehaviour:
   maxDrops: 3
   searchTime: 3.5
   corpseLabel: "\uB3C4\uC801\uC758 \uC2DC\uCCB4"
+  corpseSprite: {fileID: 21300000, guid: cf3f2e80c9b6ff642afe522d63496232, type: 3}
   fallAngle: 82
   fallDuration: 0.28
   corpseTint: {r: 0.55, g: 0.52, b: 0.52, a: 1}
@@ -302,21 +256,114 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemySpriteAnimator
   target: {fileID: 4025251782566670995}
-  artFacesLeft: 1
+  artFacesLeft: 0
   idle:
-  - {fileID: 21300000, guid: 401676841c9718144b40104c91f3c346, type: 3}
+  - {fileID: 21300000, guid: a52abbb6ce7cf3b439ba639731819c00, type: 3}
   walk:
-  - {fileID: 21300000, guid: 89022f0f2aef75042a126217d87da24b, type: 3}
-  - {fileID: 21300000, guid: 3619a3feed5bb914ead07fc79a1504f8, type: 3}
+  - {fileID: 21300000, guid: 69e97410d8550b74cb11e8295d0c8711, type: 3}
+  - {fileID: 21300000, guid: 838ea8e1dfac46f40957ca24f22d1e7b, type: 3}
+  - {fileID: 21300000, guid: fd427ec85d6204d4b9f03a81c32a59b7, type: 3}
+  - {fileID: 21300000, guid: 56140788c95ca7d4294d22fa8cf286a7, type: 3}
   attack:
-  - {fileID: 21300000, guid: 401676841c9718144b40104c91f3c346, type: 3}
-  - {fileID: 21300000, guid: a57da779cda5bcb48b827f37f9d05673, type: 3}
+  - {fileID: 21300000, guid: e4fba3b9b4bc5f146b3b26f131bb739e, type: 3}
+  - {fileID: 21300000, guid: 436765d604cd67341904458dcc124903, type: 3}
   reload: []
+  dodge:
+  - {fileID: 21300000, guid: 2d04b4c72cc91e3498b64d026b97a1fd, type: 3}
+  hurt: {fileID: 21300000, guid: 0bfb2c832133a414abca2a894cff3b39, type: 3}
+  shoot: []
   idleFps: 2
-  walkFps: 5
+  walkFps: 8
   walkThreshold: 0.25
   strikeAt: 0.7
   reloadPoseSeconds: 0.9
+--- !u!114 &2679235922735820269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414121820723608735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16224029654f934da1301bc7f35fa37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Core.FactionMember
+  faction: 2
+--- !u!114 &1133843392353639446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414121820723608735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c98d8c9eb997f3a4397997b87e34c971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.FX.HitFeel
+  bloodA: {r: 0.55, g: 0.04, b: 0.05, a: 1}
+  bloodB: {r: 0.85, g: 0.12, b: 0.1, a: 1}
+  knockback: 2.2
+  hitStop: 0.05
+--- !u!114 &657895522637121969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414121820723608735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a063a4a8865d88b4bab51e28391ac526, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.RogueEnemy
+  senseMode: 0
+  noticeRadius: 3
+  sightConeRange: 9
+  sightConeAngle: 120
+  canHear: 1
+  hearingMultiplier: 1
+  keepChasingOnceSeen: 0
+  giveUpDistance: 30
+  suspectRange: 25
+  detectRange: 15
+  unlitRangeMultiplier: 0.25
+  litAlertRadius: 0
+  sightBlockMask:
+    serializedVersion: 2
+    m_Bits: 1024
+  loseInterestTime: 5
+  moveSpeed: 3.6
+  turnSmoothing: 12
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  agentRadius: 0.42
+  wallClearance: 0.55
+  repathInterval: 0.4
+  waypointReach: 0.4
+  stuckGrace: 0.45
+  unstickDuration: 0.5
+  npcScanInterval: 0.25
+  combatNoiseRadius: 9
+  spriteRenderer: {fileID: 4025251782566670995}
+  attackRange: 1.25
+  attackDamage: 5
+  windUp: 0.16
+  attackCooldown: 0.42
+  bleedChance: 0.5
+  comboHits: 3
+  territoryRadius: 9
+  patrolPause: 2.2
+  patrolSpeed: 0.42
+  lightNoticeRange: 18
+  callRadius: 18
+  circleDistance: 2.6
+  maxStrikers: 2
+  dodgeDistance: 2.4
+  dodgeTime: 0.22
+  dodgeCooldown: 1.1
 --- !u!1 &424377146245694875
 GameObject:
   m_ObjectHideFlags: 0
@@ -510,14 +557,16 @@ MonoBehaviour:
   meleeZoneColor: {r: 0.85, g: 0.22, b: 0.2, a: 0.16}
   meleeStrikeColor: {r: 1, g: 0.3, b: 0.24, a: 0.55}
   strikeStartScale: 0.25
+  reachSteps: 6
+  pattern: {fileID: 2800000, guid: 2c145ac470bda854784e0dea566755da, type: 3}
+  reticle:
+  - {fileID: 21300000, guid: 6a54037e739abb046a9afc4950fd7368, type: 3}
+  - {fileID: 21300000, guid: 5614fc7eb0f2a3d44bf404dc720b4379, type: 3}
+  - {fileID: 21300000, guid: 3172c592ccb442346ae1c35bafa46227, type: 3}
+  - {fileID: 21300000, guid: 33450dc808718444890d2454a8b3af40, type: 3}
   rangedRingColor: {r: 0.95, g: 0.25, b: 0.22, a: 0.85}
   ringStartScale: 3.4
   ringEndRadius: 1.5
-  worldScale: 0.01
-  canvasRect: {fileID: 7018660038022620988}
-  zone: {fileID: 5046391772896530630}
-  strike: {fileID: 8360717918477390501}
-  ring: {fileID: 8408864984042154774}
 --- !u!1 &5682457327434420235
 GameObject:
   m_ObjectHideFlags: 0
@@ -924,13 +973,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemyAlertIcon
   enemy: {fileID: 0}
-  height: 3.5
+  height: 2.5
   worldScale: 0.006
   suspiciousColor: {r: 0.98, g: 0.82, b: 0.3, a: 1}
   alertedColor: {r: 0.95, g: 0.26, b: 0.22, a: 1}
   popScale: 1.7
   popDecay: 6
   alertBlinkPeriod: 0.7
+  alertSprite: {fileID: 21300000, guid: 6ceda5ecea48f8040b48fbc95644c35f, type: 3}
+  suspectSprite: {fileID: 21300000, guid: f97f3326bdae1154abebc7cd90547d80, type: 3}
   canvasRect: {fileID: 179866098749968229}
   canvasGroup: {fileID: 1710250651917281757}
   label: {fileID: 7184791052567622421}

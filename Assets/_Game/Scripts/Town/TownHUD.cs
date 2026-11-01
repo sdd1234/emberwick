@@ -10,6 +10,9 @@ namespace Capstone.Town
         [SerializeField] private Items.Interactor interactor;
         [SerializeField] private TMP_Text promptText;
         [SerializeField] private TMP_Text goldText;
+        [Tooltip("소지금 뒤 판자 - 글자 폭에 맞춰 늘인다 (맨 글씨는 뒤 상자 그림에 묻혔다)")]
+        [SerializeField] private RectTransform goldPlate;
+        [SerializeField] private float goldPad = 24f;
 
         private void Awake()
         {
@@ -29,7 +32,13 @@ namespace Capstone.Town
 
         private void RefreshGold()
         {
-            if (goldText) goldText.text = $"{GameSession.Gold:N0} G";
+            if (goldText == null) return;
+            goldText.text = $"{GameSession.Gold:N0} G";
+            if (goldPlate)
+            {
+                float w = goldText.GetPreferredValues(goldText.text).x + goldPad * 2f;
+                goldPlate.sizeDelta = new Vector2(Mathf.Ceil(w / 4f) * 4f, goldPlate.sizeDelta.y);   // 4 단위 - 판자 테두리 도트가 반 칸에 걸리지 않게
+            }
         }
     }
 }

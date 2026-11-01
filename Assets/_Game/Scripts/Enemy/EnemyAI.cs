@@ -83,11 +83,45 @@ namespace Capstone.Enemy
         [Tooltip("끼였을 때 옆으로 빠져나가는 시간 (초)")]
         [SerializeField] protected float unstickDuration = 0.5f;
 
+        [Header("진영 (피드백 2026-10-29 - 적끼리도 싸운다)")]
+        [Tooltip("적대 진영을 찾는 간격 (초)")]
+        [SerializeField] protected float npcScanInterval = 0.25f;
+        [Tooltip("싸우는 소리를 낼 때 퍼지는 반경 (m). 감염자가 이 소리를 듣고 끼어든다")]
+        [SerializeField] protected float combatNoiseRadius = 9f;
+
         [Header("참조")]
         [SerializeField] protected SpriteRenderer spriteRenderer;
 
         public AlertState State { get; protected set; } = AlertState.Idle;
         public float DistanceToPlayer { get; private set; } = float.MaxValue;
+
+        /// <summary>플레이어에 대한 경계 상태. 최종 State 는 적대 진영과 싸우는 중인지까지 합쳐서 정한다.</summary>
+        private AlertState _playerState = AlertState.Idle;
+        /// <summary>이 시각까지는 의심(조사) 상태를 놓지 않는다 - 빛 · 소리를 보러 가는 중.</summary>
+        private float _investigateUntil;
+
+        // ---------- 적대 진영 ----------
+        protected Core.FactionMember Self { get; private set; }
+        /// <summary>싸우고 있는 적대 진영 상대. 없으면 null.</summary>
+        protected Core.FactionMember Foe { get; private set; }
+        private Vector2 _foeLastSeen;
+        private float _foeLoseAt;
+        private bool _foeHunting;
+        private float _nextScanAt;
+        /// <summary>이번 프레임 목표가 플레이어인가 (적대 진영과 싸우는 중이어도 플레이어가 더 가까이 보이면 플레이어).</summary>
+        private bool _targetPlayer = true;
+        private Combat.Health _myHealth;
+
+        /// <summary>지금 노리는 대상.</summary>
+        protected Transform Target => _targetPlayer || Foe == null ? Player : Foe.transform;
+        protected bool TargetIsPlayer => _targetPlayer || Foe == null;
+        protected Vector2 TargetPosition => TargetIsPlayer ? (Vector2)Player.position : Foe.Position;
+        protected float DistanceToTarget => TargetIsPlayer ? DistanceToPlayer : Vector2.Distance(Position, Foe.Position);
+        /// <summary>노리는 대상이 보이는가 (벽 너머면 때리지 않는다).</summary>
+        protected bool CanSeeTarget => TargetIsPlayer ? CanSeePlayer : FoeVisible();
+        /// <summary>적대 진영과 싸우는 중인가.</summary>
+        public bool FightingFoe => Foe != null && !_targetPlayer;
+        public Core.FactionMember CurrentFoe => Foe;
 
         protected Transform Player;
         protected Combat.PlayerStealth PlayerStealth;
@@ -121,7 +155,7 @@ namespace Capstone.Enemy
         /// 감염체는 눈이 거의 멀어 있어 알아차리는 반경 안에서만 "보인다".
         /// </summary>
         protected bool CanSeePlayer
-            => Player != null && HasLineOfSightTo(Player.position)
+            => Player != null && !HiddenFromMe() && HasLineOfSightTo(Player.position)
                && (senseMode != SenseMode.Hearing || DistanceToPlayer <= noticeRadius || InSightCone());
 
         /// <summary>바라보는 방향. 움직이면 가는 쪽, 쫓는 중이면 목표 쪽.</summary>
@@ -131,9 +165,13 @@ namespace Capstone.Enemy
         private Vector2 _facing = Vector2.down;
 
         /// <summary>플레이어가 기본 시야 원뿔 안에 보이는가 (벽에 가리면 안 보인다).</summary>
+        /// <summary>플레이어가 덤불에 숨어 있고 바로 옆이 아니다.</summary>
+        protected bool HiddenFromMe()
+            => PlayerStealth != null && PlayerStealth.IsHidden && DistanceToPlayer > Combat.PlayerStealth.HiddenRevealRadius;
+
         protected bool InSightCone()
         {
-            if (Player == null || sightConeRange <= 0f) return false;
+            if (Player == null || sightConeRange <= 0f || HiddenFromMe()) return false;
             Vector2 to = (Vector2)Player.position - Position;
             float d = to.magnitude;
             if (d > sightConeRange) return false;
@@ -142,7 +180,7 @@ namespace Capstone.Enemy
         }
 
         /// <summary>등 뒤든 어디든 바로 옆이면 알아차린다.</summary>
-        private bool Noticed() => Player != null && DistanceToPlayer <= noticeRadius && HasLineOfSightTo(Player.position);
+        private bool Noticed() => Player != null && !HiddenFromMe() && DistanceToPlayer <= noticeRadius && HasLineOfSightTo(Player.position);
 
         private void UpdateFacing()
         {
@@ -161,7 +199,9 @@ namespace Capstone.Enemy
         /// 쫓아갈 곳. 보이거나 추적 중이면 플레이어, 아니면 마지막으로 보거나 들은 자리.
         /// 감염체는 소리를 들으면 "소리가 마지막으로 난 자리"로 간다 - 플레이어가 아니라.
         /// </summary>
-        protected Vector2 ChaseTarget => (CanSeePlayer || _hunting) ? (Vector2)Player.position : LastKnownPosition;
+        protected Vector2 ChaseTarget
+            => !TargetIsPlayer ? (FoeVisible() || _foeHunting ? Foe.Position : _foeLastSeen)
+             : (CanSeePlayer || _hunting) ? (Vector2)Player.position : LastKnownPosition;
 
         /// <summary>발견한 뒤 놓치지 않고 쫓는 중 (keepChasingOnceSeen).</summary>
         public bool IsHunting => _hunting;
@@ -173,6 +213,9 @@ namespace Capstone.Enemy
             Body.gravityScale = 0f;
             Body.freezeRotation = true;
             if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+            Self = GetComponent<Core.FactionMember>();
+            _myHealth = GetComponent<Combat.Health>();
+            if (_myHealth != null) _myHealth.OnHit += HandleHit;
 
             // 인스펙터에서 안 채웠으면 시야를 막는 것과 같은 레이어로 본다.
             // 벽은 눈도 몸도 똑같이 막으므로 기본값으로 맞는다
@@ -188,18 +231,144 @@ namespace Capstone.Enemy
         protected virtual void OnDisable() => Core.NoiseSystem.OnNoise -= HandleNoise;
 
         /// <summary>
+        /// 맞았다. 플레이어가 쐈으면 그 자리를 안다. 적대 진영이 때렸으면 그쪽과 싸운다.
+        /// 등 뒤에서 맞고도 가만히 서 있으면 "맞는 과녁"이 된다.
+        /// </summary>
+        private void HandleHit(float amount, Vector2 dir, Combat.DamageType type, Combat.HitResult result, GameObject source)
+        {
+            if (source == null || !enabled) return;
+            var fm = source.GetComponent<Core.FactionMember>();
+            if (Player != null && source.transform == Player)
+            {
+                LastKnownPosition = Player.position;
+                _loseInterestAt = Time.time + loseInterestTime;
+                if (keepChasingOnceSeen) _hunting = true;
+                SetPlayerState(AlertState.Alerted);
+                return;
+            }
+            if (fm != null && Self != null && Self.IsHostileTo(fm) && fm.Faction != Core.Faction.Player) Engage(fm, true);
+        }
+
+        /// <summary>적대 진영 상대와 싸우기 시작한다. hunt 면 놓치지 않고 쫓는다 (감염자 · 맞은 쪽).</summary>
+        protected void Engage(Core.FactionMember foe, bool hunt)
+        {
+            if (foe == null || !foe.Alive) return;
+            bool fresh = Foe != foe;
+            Foe = foe;
+            _foeLastSeen = foe.Position;
+            _foeLoseAt = Time.time + loseInterestTime * 1.5f;
+            _foeHunting |= hunt || keepChasingOnceSeen;
+            if (fresh) OnEngaged(foe);
+        }
+
+        /// <summary>적대 진영과 붙었을 때 (도적은 동료를 부른다).</summary>
+        protected virtual void OnEngaged(Core.FactionMember foe) { }
+
+        protected void Disengage() { Foe = null; _foeHunting = false; }
+
+        private bool FoeVisible()
+        {
+            if (Foe == null || !Foe.Alive) return false;
+            Vector2 to = Foe.Position - Position;
+            float d = to.magnitude;
+            if (!HasLineOfSightTo(Foe.Position)) return false;
+            if (senseMode == SenseMode.Hearing) return d <= noticeRadius * 1.3f;
+            // 한 번 붙은 상대는 원뿔 밖으로 조금 벗어나도 놓치지 않는다 (싸우는 중엔 고개를 돌린다)
+            return d <= Mathf.Max(sightConeRange * 1.4f, noticeRadius);
+        }
+
+        /// <summary>적대 진영을 둘러본다. 시야형은 원뿔 · 근접, 청각형(감염자)은 바로 옆에 붙은 것만.</summary>
+        private void ScanForFoes()
+        {
+            if (Self == null) return;
+
+            if (Foe != null)
+            {
+                if (!Foe.Alive || !Foe.isActiveAndEnabled) { Disengage(); }
+                else
+                {
+                    float d = Vector2.Distance(Position, Foe.Position);
+                    if (FoeVisible()) { _foeLastSeen = Foe.Position; _foeLoseAt = Time.time + loseInterestTime * 1.5f; }
+                    if (d > giveUpDistance) Disengage();
+                    else if (!_foeHunting && Time.time > _foeLoseAt) Disengage();
+                    else if (_foeHunting && !FoeVisible() && Time.time > _foeLoseAt + loseInterestTime * 2f) Disengage();
+                }
+            }
+
+            if (Time.time < _nextScanAt) return;
+            _nextScanAt = Time.time + npcScanInterval * Random.Range(0.8f, 1.2f);
+
+            Core.FactionMember best = null;
+            float bestD = float.MaxValue;
+            var all = Core.FactionMember.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var o = all[i];
+                if (o == null || o == Self || !o.Alive || o.Faction == Core.Faction.Player || !Self.IsHostileTo(o)) continue;
+                Vector2 to = o.Position - Position;
+                float d = to.magnitude;
+                if (d > Mathf.Max(sightConeRange, noticeRadius) * 1.05f || d >= bestD) continue;
+                bool seen = d <= noticeRadius
+                    || (senseMode == SenseMode.Sight && sightConeRange > 0f && d <= sightConeRange && Vector2.Angle(_facing, to) <= sightConeAngle * 0.5f);
+                if (!seen || !HasLineOfSightTo(o.Position)) continue;
+                best = o; bestD = d;
+            }
+            if (best != null && (Foe == null || bestD < Vector2.Distance(Position, Foe.Position) - 2f)) Engage(best, false);
+        }
+
+        /// <summary>
+        /// 이번 프레임 누구를 노릴지. 싸우던 상대가 있어도 플레이어가 보이고 더 가까우면 플레이어 쪽으로 돈다 -
+        /// 그래서 플레이어가 두 무리 사이에 끼면 양쪽에서 맞는다.
+        /// </summary>
+        private void ResolveTarget()
+        {
+            if (Foe == null) { _targetPlayer = true; ApplyState(_playerState); return; }
+            bool playerHot = _playerState == AlertState.Alerted && (CanSeePlayer || _hunting);
+            float foeD = Vector2.Distance(Position, Foe.Position);
+            _targetPlayer = playerHot && DistanceToPlayer < foeD;
+            ApplyState(_targetPlayer ? _playerState : AlertState.Alerted);
+        }
+
+        /// <summary>싸우는 소리를 낸다. 감염자가 듣고 몰려온다.</summary>
+        protected void EmitCombatNoise() => Core.NoiseSystem.Emit(Position, combatNoiseRadius, gameObject);
+
+        /// <summary>그 자리를 보러 간다 (빛 · 소리). 플레이어를 직접 본 것은 아니다.</summary>
+        protected void Investigate(Vector2 at, float seconds)
+        {
+            if (_playerState == AlertState.Alerted && Time.time < _loseInterestAt) return;   // 이미 쫓는 중
+            LastKnownPosition = at;
+            _investigateUntil = Time.time + seconds;
+            _loseInterestAt = Time.time + seconds;
+            SetPlayerState(AlertState.Suspicious);
+        }
+        protected bool Investigating => _playerState == AlertState.Suspicious && Time.time < _investigateUntil;
+        protected void EndInvestigation() { _investigateUntil = 0f; if (_playerState == AlertState.Suspicious) SetPlayerState(AlertState.Idle); }
+
+        /// <summary>
         /// 소리를 들었다. 감염체는 들린 자리로 달려간다 - 플레이어가 아니라 "소리 난 곳"으로.
         /// 그래서 소리를 내고 옆으로 빠지면 엉뚱한 데를 뒤지는 감염체를 볼 수 있다.
         /// </summary>
         private void HandleNoise(Vector2 at, float radius, GameObject source)
         {
-            if (!canHear || source == gameObject) return;
-            if (_hunting) return;                   // 이미 플레이어를 쫓는 중이면 다른 소리에 끌려가지 않는다
+            if (!canHear || source == gameObject || !enabled) return;
             if (Vector2.Distance(Position, at) > radius * hearingMultiplier) return;
 
+            // 적대 진영이 낸 소리 - 감염자는 그쪽을 덮치고, 나머지는 보러 간다
+            var fm = source != null ? source.GetComponent<Core.FactionMember>() : null;
+            bool fromPlayer = source != null && Player != null && source.transform == Player;
+            if (fm != null && !fromPlayer)
+            {
+                if (Self == null || !Self.IsHostileTo(fm)) return;              // 같은 편 소리 - 이교도 무리가 싸우는 소리는 도와주러 가는 걸로 친다
+                if (senseMode == SenseMode.Hearing) { Engage(fm, true); return; }
+                if (Foe == null) Investigate(at, loseInterestTime * 2f);
+                return;
+            }
+
+            if (_hunting) return;                   // 이미 플레이어를 쫓는 중이면 다른 소리에 끌려가지 않는다
             LastKnownPosition = at;
             _loseInterestAt = Time.time + loseInterestTime;
-            SetState(AlertState.Alerted);
+            _investigateUntil = Time.time + loseInterestTime;
+            SetPlayerState(AlertState.Alerted);
         }
 
         protected virtual void Start()
@@ -217,6 +386,8 @@ namespace Capstone.Enemy
             if (Player == null) return;
             TrackProgress();              // Think 이 새 속도를 넣기 전에 지난 프레임 결과를 본다
             UpdateDetection();
+            ScanForFoes();
+            ResolveTarget();
             Think();
             UpdateFacing();
             FacePlayerIfAware();
@@ -241,7 +412,7 @@ namespace Capstone.Enemy
                 _litAlerted = true;
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
-                SetState(AlertState.Alerted);
+                SetPlayerState(AlertState.Alerted);
                 return;
             }
 
@@ -251,7 +422,7 @@ namespace Capstone.Enemy
                 _litAlerted = false;
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
-                SetState(AlertState.Alerted);
+                SetPlayerState(AlertState.Alerted);
                 return;
             }
 
@@ -267,23 +438,23 @@ namespace Capstone.Enemy
 
             if (hasLineOfSight && DistanceToPlayer <= detect)
             {
-                SetState(AlertState.Alerted);
+                SetPlayerState(AlertState.Alerted);
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
             }
             else if (hasLineOfSight && DistanceToPlayer <= suspect)
             {
                 // 이미 추격 중이면 의심으로 내려오지 않는다
-                if (State != AlertState.Alerted || Time.time >= _loseInterestAt)
-                    SetState(AlertState.Suspicious);
+                if (_playerState != AlertState.Alerted || Time.time >= _loseInterestAt)
+                    SetPlayerState(AlertState.Suspicious);
             }
-            else if (State == AlertState.Alerted && Time.time >= _loseInterestAt)
+            else if (_playerState == AlertState.Alerted && Time.time >= _loseInterestAt)
             {
-                SetState(AlertState.Idle);
+                SetPlayerState(AlertState.Idle);
             }
-            else if (State == AlertState.Suspicious)
+            else if (_playerState == AlertState.Suspicious && Time.time >= _investigateUntil)
             {
-                SetState(AlertState.Idle);
+                SetPlayerState(AlertState.Idle);
             }
         }
 
@@ -301,7 +472,7 @@ namespace Capstone.Enemy
                 {
                     LastKnownPosition = Player.position;
                     _loseInterestAt = Time.time + loseInterestTime;
-                    SetState(AlertState.Alerted);
+                    SetPlayerState(AlertState.Alerted);
                     return;
                 }
             }
@@ -311,10 +482,10 @@ namespace Capstone.Enemy
                 if (keepChasingOnceSeen) _hunting = true;
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
-                SetState(AlertState.Alerted);
+                SetPlayerState(AlertState.Alerted);
                 return;
             }
-            if (State != AlertState.Idle && Time.time >= _loseInterestAt) SetState(AlertState.Idle);
+            if (_playerState != AlertState.Idle && Time.time >= _loseInterestAt && Time.time >= _investigateUntil) SetPlayerState(AlertState.Idle);
         }
 
         /// <summary>불을 켠 플레이어가 무조건 걸리는 반경. 비워두면 플레이어 원뿔 길이를 따라간다.</summary>
@@ -336,19 +507,19 @@ namespace Capstone.Enemy
             return Physics2D.Raycast(origin, delta / dist, dist, sightBlockMask).collider == null;
         }
 
-        private void SetState(AlertState next)
-        {
-            if (State == next) return;
-            State = next;
+        private void SetPlayerState(AlertState next) => _playerState = next;
 
-            // 발각 중인 적이 하나라도 있으면 플레이어는 은신할 수 없다
-            bool shouldCount = next == AlertState.Alerted;
+        private void ApplyState(AlertState next)
+        {
+            // 발각 중인 적이 하나라도 있으면 플레이어는 은신할 수 없다 - 적대 진영과 싸우는 중이면 세지 않는다
+            bool shouldCount = next == AlertState.Alerted && TargetIsPlayer;
             if (shouldCount != _countedAsDetector && PlayerStealth != null)
             {
                 PlayerStealth.SetDetectedBy(shouldCount);
                 _countedAsDetector = shouldCount;
             }
-
+            if (State == next) return;
+            State = next;
             OnStateChanged(next);
         }
 
@@ -549,12 +720,13 @@ namespace Capstone.Enemy
         private void FacePlayerIfAware()
         {
             if (!spriteRenderer || State == AlertState.Idle || Player == null) return;
-            float dx = Player.position.x - transform.position.x;
+            float dx = ChaseTarget.x - transform.position.x;
             if (Mathf.Abs(dx) > 0.1f) spriteRenderer.flipX = dx < 0f;
         }
 
         private void OnDestroy()
         {
+            if (_myHealth != null) _myHealth.OnHit -= HandleHit;
             // 죽으면서 탐지 카운트를 반드시 되돌려야 은신이 영구히 막히지 않는다
             if (_countedAsDetector && PlayerStealth != null)
                 PlayerStealth.SetDetectedBy(false);

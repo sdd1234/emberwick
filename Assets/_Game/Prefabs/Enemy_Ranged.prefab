@@ -152,6 +152,8 @@ GameObject:
   - component: {fileID: 8207448805904473891}
   - component: {fileID: 8253340556567428566}
   - component: {fileID: 6219199133866340047}
+  - component: {fileID: 2403492402387961545}
+  - component: {fileID: 8848001415311036665}
   m_Layer: 9
   m_Name: Enemy_Ranged
   m_TagString: Untagged
@@ -254,7 +256,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 8c2c1c45f80c64d49bbc587e6c62e699, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ee9acc97eb5f0bb45bcec584b239da42, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -318,6 +320,8 @@ MonoBehaviour:
   waypointReach: 0.4
   stuckGrace: 0.45
   unstickDuration: 0.5
+  npcScanInterval: 0.25
+  combatNoiseRadius: 9
   spriteRenderer: {fileID: 0}
   projectilePrefab: {fileID: 6592981483982480414, guid: 3783d6b2e96c05b4f963c8ece8bcfb54, type: 3}
   muzzle: {fileID: 7918960173323340972}
@@ -333,6 +337,11 @@ MonoBehaviour:
   followDistance: 1.8
   patrolSpeed: 0.45
   patrolPause: 1.5
+  throwsFireFlask: 0
+  flaskDamage: 30
+  flaskCooldown: 5.5
+  flaskSprite: {fileID: 21300000, guid: 5f48f83233ab2524f83f18cc0c286abb, type: 3}
+  followSide: 1
 --- !u!114 &2320258828576445009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -355,6 +364,7 @@ MonoBehaviour:
   maxDrops: 3
   searchTime: 3.5
   corpseLabel: "\uC2DC\uCCB4"
+  corpseSprite: {fileID: 21300000, guid: a0a64430d486e6c468f2454c1c777d5a, type: 3}
   fallAngle: 82
   fallDuration: 0.28
   corpseTint: {r: 0.55, g: 0.52, b: 0.52, a: 1}
@@ -443,21 +453,60 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemySpriteAnimator
   target: {fileID: 48042382393357112}
-  artFacesLeft: 1
+  artFacesLeft: 0
   idle:
-  - {fileID: 21300000, guid: 8c2c1c45f80c64d49bbc587e6c62e699, type: 3}
+  - {fileID: 21300000, guid: ee9acc97eb5f0bb45bcec584b239da42, type: 3}
   walk:
-  - {fileID: 21300000, guid: 45e33d2035ce8ac4ca363dd06db97d50, type: 3}
-  - {fileID: 21300000, guid: d84e22b7b55f29047a8d00410748f217, type: 3}
+  - {fileID: 21300000, guid: 2b47d5f15ba36ec4ab21196c198fafe0, type: 3}
+  - {fileID: 21300000, guid: 179d9c7923d8ff2408cf8daefabdf2db, type: 3}
+  - {fileID: 21300000, guid: cc606958ab991554fb01f02235b535be, type: 3}
+  - {fileID: 21300000, guid: bd55ba50987d6fa479bad84e4dd37449, type: 3}
   attack:
-  - {fileID: 21300000, guid: 63027a2f794053e48a6ff5f86c73169a, type: 3}
+  - {fileID: 21300000, guid: 3da6a58c70f5c2546b128de1e9ed6713, type: 3}
   reload:
-  - {fileID: 21300000, guid: 539e6e3d75433764ebb40f9c60e55d9c, type: 3}
+  - {fileID: 21300000, guid: dc49385ea0301044b9a2e2bfb9e6f305, type: 3}
+  dodge: []
+  hurt: {fileID: 21300000, guid: daa5150b1963b3641abe88b811927bdd, type: 3}
+  shoot:
+  - {fileID: 21300000, guid: 70df8cf6c53a69a4abedb1a0d00da606, type: 3}
+  - {fileID: 21300000, guid: d35603c9d2398824ebe3ec1992ff3c26, type: 3}
+  - {fileID: 21300000, guid: e4b4b94a57408594fac0e2af8e0aacbb, type: 3}
+  - {fileID: 21300000, guid: 82a06f4d6a3b0e7499cac455a86c7fa4, type: 3}
+  - {fileID: 21300000, guid: 242e1c39d05517244b5b657244078cba, type: 3}
   idleFps: 2
-  walkFps: 5
+  walkFps: 6
   walkThreshold: 0.25
   strikeAt: 0.7
   reloadPoseSeconds: 0.9
+--- !u!114 &2403492402387961545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 357252038720265789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16224029654f934da1301bc7f35fa37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.Core.FactionMember
+  faction: 1
+--- !u!114 &8848001415311036665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 357252038720265789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c98d8c9eb997f3a4397997b87e34c971, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Capstone.FX.HitFeel
+  bloodA: {r: 0.55, g: 0.04, b: 0.05, a: 1}
+  bloodB: {r: 0.85, g: 0.12, b: 0.1, a: 1}
+  knockback: 2.2
+  hitStop: 0.05
 --- !u!1 &1330268593106489844
 GameObject:
   m_ObjectHideFlags: 0
@@ -949,13 +998,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.EnemyAlertIcon
   enemy: {fileID: 0}
-  height: 3.5
+  height: 2.5
   worldScale: 0.006
   suspiciousColor: {r: 0.98, g: 0.82, b: 0.3, a: 1}
   alertedColor: {r: 0.95, g: 0.26, b: 0.22, a: 1}
   popScale: 1.7
   popDecay: 6
   alertBlinkPeriod: 0.7
+  alertSprite: {fileID: 21300000, guid: 6ceda5ecea48f8040b48fbc95644c35f, type: 3}
+  suspectSprite: {fileID: 21300000, guid: f97f3326bdae1154abebc7cd90547d80, type: 3}
   canvasRect: {fileID: 2288688687833929566}
   canvasGroup: {fileID: 2150803243468944869}
   label: {fileID: 1922072968360469648}
@@ -1007,14 +1058,16 @@ MonoBehaviour:
   meleeZoneColor: {r: 0.85, g: 0.22, b: 0.2, a: 0.16}
   meleeStrikeColor: {r: 1, g: 0.3, b: 0.24, a: 0.55}
   strikeStartScale: 0.25
+  reachSteps: 6
+  pattern: {fileID: 2800000, guid: 2c145ac470bda854784e0dea566755da, type: 3}
+  reticle:
+  - {fileID: 21300000, guid: 6a54037e739abb046a9afc4950fd7368, type: 3}
+  - {fileID: 21300000, guid: 5614fc7eb0f2a3d44bf404dc720b4379, type: 3}
+  - {fileID: 21300000, guid: 3172c592ccb442346ae1c35bafa46227, type: 3}
+  - {fileID: 21300000, guid: 33450dc808718444890d2454a8b3af40, type: 3}
   rangedRingColor: {r: 0.95, g: 0.25, b: 0.22, a: 0.85}
   ringStartScale: 3.4
   ringEndRadius: 1.5
-  worldScale: 0.01
-  canvasRect: {fileID: 379365501277853685}
-  zone: {fileID: 7567827641415745343}
-  strike: {fileID: 7789042767636078568}
-  ring: {fileID: 4469137451019190959}
 --- !u!1 &8626059193809091765
 GameObject:
   m_ObjectHideFlags: 0

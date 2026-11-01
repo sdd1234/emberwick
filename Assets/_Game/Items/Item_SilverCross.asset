@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: "\uC740 \uC2ED\uC790\uAC00"
   description: "\uAD50\uD68C\uAC00 \uAC12\uC744 \uCCD0\uC900\uB2E4. \uC5ED\uBCD1\uC740
     \uC548 \uB9C9\uC544\uC900\uB2E4."
-  icon: {fileID: 21300000, guid: d719fe134339a24408d8511aa52aedc8, type: 3}
+  icon: {fileID: 21300000, guid: 384625f08bbdf0f488369bcbbb5fd106, type: 3}
   grade: 2
   gridWidth: 1
   gridHeight: 2
@@ -23,3 +23,5 @@ MonoBehaviour:
   weight: 0.6
   stackable: 0
   maxStack: 1
+  healAmount: 0
+  stopsBleeding: 0

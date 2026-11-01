@@ -27,6 +27,16 @@ namespace Capstone.Combat
 
         public bool IsRecoverable { get; private set; }
 
+        /// <summary>날아가는 중인 볼트들. 도적이 궤적을 읽고 피하는 데 쓴다.</summary>
+        public static readonly System.Collections.Generic.List<Bolt> Flying = new();
+        public Vector2 Direction => _direction;
+        public float Speed => speed;
+        public GameObject Owner => _owner;
+        public bool InFlight => !_stuck;
+
+        private void OnEnable() => Flying.Add(this);
+        private void OnDisable() => Flying.Remove(this);
+
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
@@ -65,7 +75,7 @@ namespace Capstone.Combat
             var health = other.GetComponentInParent<Health>();
             if (health != null && !health.IsDead)
             {
-                health.TakeDamage(_damage, _direction);
+                health.TakeDamage(_damage, _direction, DamageType.Physical, _owner);
                 Destroy(gameObject);
                 return;
             }
@@ -77,8 +87,13 @@ namespace Capstone.Combat
         private void Stick()
         {
             _stuck = true;
+            Flying.Remove(this);
             _rb.linearVelocity = Vector2.zero;
             _rb.bodyType = RigidbodyType2D.Static;
+            FX.SfxBank.Play("bolt_stick", transform.position, 0.7f);
+            // 박힌 자리에서 나뭇조각 · 돌가루가 튀고, 불티 두어 점
+            FX.PixelFX.Burst(transform.position, -_direction, new Color(0.36f, 0.3f, 0.24f), new Color(0.62f, 0.56f, 0.46f), 8, 4f, 55f, true, 0.35f);
+            FX.PixelFX.Burst(transform.position, -_direction, new Color(1f, 0.8f, 0.45f), Color.white, 2, 5f, 35f, false, 0.15f);
             IsRecoverable = Random.value < recoverChance;
 
             // 회수 불가 볼트는 어둡게 표시해 구분한다

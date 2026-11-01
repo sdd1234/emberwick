@@ -22,6 +22,12 @@ namespace Capstone.Enemy
         [SerializeField] private Sprite[] attack;
         [Tooltip("원거리 - 쏜 뒤 잠깐 보여줄 장전 자세")]
         [SerializeField] private Sprite[] reload;
+        [Tooltip("도적 - 옆으로 구르는 자세")]
+        [SerializeField] private Sprite[] dodge;
+        [Tooltip("맞았을 때 움찔")]
+        [SerializeField] private Sprite hurt;
+        [Tooltip("원거리 - 들어 올림 · 겨눔 · 발사 · 내림 · 장전 (5장). 있으면 attack/reload 대신 쓴다")]
+        [SerializeField] private Sprite[] shoot;
 
         [Header("속도")]
         [SerializeField] private float idleFps = 2f;
@@ -36,18 +42,23 @@ namespace Capstone.Enemy
         private EnemyAI _ai;
         private MeleeEnemy _melee;
         private RangedEnemy _ranged;
+        private RogueEnemy _rogue;
         private Rigidbody2D _body;
         private Combat.Health _health;
         private float _clock;
         private bool _wasAiming;
         private float _reloadUntil;
         private Vector2 _lastFace = Vector2.left;
+        private bool _rogueWasWinding;
+        private float _firedAt = -9f;
+        private float _rogueStrikeShowUntil;
 
         private void Awake()
         {
             _ai = GetComponent<EnemyAI>();
             _melee = _ai as MeleeEnemy;
             _ranged = _ai as RangedEnemy;
+            _rogue = _ai as RogueEnemy;
             _body = GetComponent<Rigidbody2D>();
             _health = GetComponent<Combat.Health>();
             if (!target) target = GetComponentInChildren<SpriteRenderer>();
@@ -68,13 +79,39 @@ namespace Capstone.Enemy
             Vector2 face = v.sqrMagnitude > walkThreshold * walkThreshold ? v : _ai.Facing;
             if (_melee != null && _melee.WindupProgress >= 0f) face = _melee.AttackFacing;
             if (_ranged != null && _ranged.AimProgress >= 0f) face = _ranged.AimTarget - (Vector2)transform.position;
+            if (_rogue != null && _rogue.WindupProgress >= 0f) face = _rogue.AttackFacing;
             if (Mathf.Abs(face.x) > 0.05f) _lastFace = face;
             bool lookRight = _lastFace.x > 0f;
             target.flipX = artFacesLeft ? lookRight : !lookRight;
         }
 
+        private FX.HitFeel _feel;
+
         private Sprite Pick(Vector2 v)
         {
+            if (_feel == null) _feel = GetComponent<FX.HitFeel>();
+            if (hurt != null && _feel != null && Time.time - _feel.LastHitAt < 0.16f
+                && !(_melee != null && _melee.WindupProgress >= 0f)) return hurt;
+            if (_ranged != null && shoot != null && shoot.Length >= 5)
+            {
+                float aim = _ranged.AimProgress;
+                if (_wasAiming && aim < 0f) _firedAt = Time.time;   // 방금 쐈다
+                _wasAiming = aim >= 0f;
+                if (aim >= 0f) return aim < 0.3f ? shoot[0] : shoot[1];          // 들어 올림 → 겨눔
+                float t = Time.time - _firedAt;
+                if (t < 0.12f) return shoot[2];                                   // 발사 반동
+                if (t < 0.28f) return shoot[3];                                   // 내림
+                if (t < reloadPoseSeconds + 0.28f) return shoot[4];               // 장전
+            }
+            if (_rogue != null)
+            {
+                if (_rogue.IsDodging && Has(dodge)) return dodge[0];
+                float w = _rogue.WindupProgress;
+                if (_rogueWasWinding && w < 0f) _rogueStrikeShowUntil = Time.time + 0.14f;   // 방금 찔렀다 - 뻗은 자세를 잠깐 남긴다
+                _rogueWasWinding = w >= 0f;
+                if (w >= 0f && Has(attack)) return attack[0];
+                if (Time.time < _rogueStrikeShowUntil && Has(attack)) return attack[attack.Length - 1];
+            }
             if (_melee != null)
             {
                 float w = _melee.WindupProgress;

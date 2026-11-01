@@ -132,10 +132,8 @@ namespace Capstone.UI
                 ? p / attackPortion
                 : 1f - Mathf.SmoothStep(0f, 1f, (p - attackPortion) / (1f - attackPortion));
 
-            var c = damageColor;
-            c.a = _peak * maxAlpha * k;
-            vignette.color = c;
-            vignette.enabled = c.a > 0.002f;
+            // 붉은 원형 비네트는 끈다 (2026-10-31 피드백 - 공포 쪽은 붉은 화면보다 어둠이 조여 오는 쪽). 흔들림만 남긴다
+            vignette.enabled = false;
         }
 
     }

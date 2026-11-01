@@ -20,6 +20,16 @@ namespace Capstone.Combat
 
         public event Action<bool> OnStealthChanged;
 
+        /// <summary>
+        /// 덤불 속에 숨어 있는가 (2026-10-29). 불을 켜면 숨은 게 아니다 - 덤불 속 등불은 오히려 등대다.
+        /// 숨어 있으면 적은 바로 옆(HiddenRevealRadius)이 아니면 못 본다. 소리는 그대로 듣는다.
+        /// </summary>
+        public bool IsHidden => _bushes > 0 && !(torch != null && torch.IsLit);
+        public const float HiddenRevealRadius = 1.6f;
+        private int _bushes;
+        public void EnterBush() => _bushes++;
+        public void ExitBush() => _bushes = Mathf.Max(0, _bushes - 1);
+
         private float _restealthAt;
         private int _detectorCount;
 

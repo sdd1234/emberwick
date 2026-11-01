@@ -27,6 +27,10 @@ namespace Capstone.Enemy
         [Tooltip("발각 상태일 때 깜빡이는 주기(초). 0 이면 안 깜빡인다")]
         [SerializeField] private float alertBlinkPeriod = 0.7f;
 
+        [Header("도트 아이콘 (2026-10-29) - 있으면 글자 대신 그림을 쓴다")]
+        [SerializeField] private Sprite alertSprite;
+        [SerializeField] private Sprite suspectSprite;
+
         [Header("프리팹 조각")]
         [Tooltip("월드 스페이스 Canvas 의 RectTransform")]
         [SerializeField] private RectTransform canvasRect;
@@ -54,9 +58,62 @@ namespace Capstone.Enemy
             }
         }
 
+        private SpriteRenderer _icon;
+        private float _shownAt;
+
+        /// <summary>
+        /// 도트 아이콘 연출.
+        ///   등장 - 도트 2배로 튀어나왔다가 1배로 내려앉는다 (어중간한 배율 없이 계단으로)
+        ///   대기 - 1도트씩 위아래로 떠 있다
+        ///   발각(!) - 짧게 하얗게 번쩍이고, 이후엔 천천히 깜빡인다 / 의심(?) - 좌우로 1도트씩 갸웃
+        /// </summary>
+        private void PixelIcon(AlertState state)
+        {
+            if (_icon == null)
+            {
+                var go = new GameObject("PixelAlert");
+                go.transform.SetParent(transform, false);
+                _icon = go.AddComponent<SpriteRenderer>();
+                _icon.sharedMaterial = FX.PixelFX.UnlitMaterial;
+                _icon.sortingOrder = 57;
+                if (canvasRect) canvasRect.gameObject.SetActive(false);
+            }
+            bool show = state != AlertState.Idle;
+            if (state != _shown)
+            {
+                if (state == AlertState.Alerted) FX.SfxBank.Play("alert", transform.position, 0.6f, 0.04f);
+                else if (state == AlertState.Suspicious) FX.SfxBank.Play("suspect", transform.position, 0.45f, 0.04f);
+                _shown = state; _shownAt = Time.time;
+            }
+            _icon.enabled = show;
+            if (!show) return;
+
+            _icon.sprite = state == AlertState.Alerted ? alertSprite : suspectSprite;
+            float age = Time.time - _shownAt;
+            float px = 1f / 38f;
+            float ps = transform.lossyScale.x != 0f ? Mathf.Abs(transform.lossyScale.x) : 1f;
+            int scale = age < 0.08f ? 2 : 1;
+            float bob = Mathf.Round(Mathf.Sin(Time.time * 4f) * 1.2f) * px;
+            float jump = age < 0.18f ? Mathf.Round((1f - age / 0.18f) * 6f) * px : 0f;
+            float sway = state == AlertState.Suspicious ? Mathf.Round(Mathf.Sin(Time.time * 2.2f)) * px : 0f;
+            _icon.transform.localScale = Vector3.one * (scale / ps);
+            _icon.transform.rotation = Quaternion.identity;
+            Vector3 p = transform.position + new Vector3(sway, height + 0.25f + bob + jump, 0f);
+            _icon.transform.position = new Vector3(Mathf.Round(p.x / px) * px, Mathf.Round(p.y / px) * px, 0f);
+            if (state == AlertState.Alerted)
+            {
+                bool flash = age < 0.12f || (age < 0.36f && age > 0.24f);
+                float blink = alertBlinkPeriod > 0f && age > 0.5f ? Mathf.PingPong(Time.time / alertBlinkPeriod, 1f) : 1f;
+                _icon.color = flash ? new Color(1f, 1f, 1f, 0.35f) : new Color(1f, 1f, 1f, Mathf.Lerp(0.6f, 1f, blink));   // 처음 두 번 빠르게 깜빡여 눈길을 끈다
+            }
+            else _icon.color = Color.white;
+        }
+
         private void LateUpdate()
         {
-            if (enemy == null || canvasRect == null) return;
+            if (enemy == null) return;
+            if (alertSprite != null && suspectSprite != null) { PixelIcon(enemy.State); return; }
+            if (canvasRect == null) return;
 
             var state = enemy.State;
             bool show = state != AlertState.Idle;

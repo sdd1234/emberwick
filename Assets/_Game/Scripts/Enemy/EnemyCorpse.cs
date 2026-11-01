@@ -22,6 +22,8 @@ namespace Capstone.Enemy
         [SerializeField] private string corpseLabel = "시체";
 
         [Header("연출")]
+        [Tooltip("누운 그림 (도트). 있으면 스프라이트를 돌리지 않고 이 그림으로 바꾼다 - 도트를 돌리면 격자가 깨진다")]
+        [SerializeField] private Sprite corpseSprite;
         [Tooltip("쓰러질 때 눕히는 각도")]
         [SerializeField] private float fallAngle = 82f;
 
@@ -76,6 +78,15 @@ namespace Capstone.Enemy
             if (sr)
             {
                 sr.sortingOrder -= 5;                       // 살아있는 것들 아래로
+                if (corpseSprite != null)
+                {
+                    bool flip = sr.flipX;
+                    sr.sprite = corpseSprite;
+                    sr.flipX = flip;
+                    sr.color = Color.Lerp(Color.white, corpseTint, 0.45f);
+                    if (isActiveAndEnabled) StartCoroutine(Slump(sr));
+                    goto loot;
+                }
                 // 바라보던 쪽으로 넘어가야 자연스럽다
                 float target = sr.flipX ? -fallAngle : fallAngle;
                 if (fallDuration > 0f && isActiveAndEnabled) StartCoroutine(FallOver(sr, target));
@@ -86,6 +97,7 @@ namespace Capstone.Enemy
                 }
             }
 
+            loot:
             // --- 털 수 있게 만든다
             gameObject.layer = LayerMask.NameToLayer(Core.GameLayers.Interact);
 
@@ -135,6 +147,20 @@ namespace Capstone.Enemy
             if (sr == null) yield break;
             sr.transform.rotation = Quaternion.Euler(0f, 0f, target);
             sr.color = corpseTint;
+        }
+
+        /// <summary>누운 그림으로 바뀌는 순간 살짝 내려앉는다 - 도트 한두 칸, 회전 없이.</summary>
+        private IEnumerator Slump(SpriteRenderer sr)
+        {
+            Vector3 basePos = sr.transform.localPosition;
+            float px = 1f / 76f;                               // 부모 2배 기준 도트 한 칸
+            sr.transform.localPosition = basePos + Vector3.up * px * 3f;
+            yield return new WaitForSeconds(0.05f);
+            if (sr == null) yield break;
+            sr.transform.localPosition = basePos - Vector3.up * px;
+            yield return new WaitForSeconds(0.06f);
+            if (sr == null) yield break;
+            sr.transform.localPosition = basePos;
         }
 
         private List<ItemDefinition> RollDrops()

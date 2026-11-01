@@ -53,7 +53,69 @@ namespace Capstone.Player
 
         /// <summary>현재 시야 원뿔의 반각(도). 적 탐지 판정 등에서 참조한다.</summary>
         /// <summary>불을 켰을 때의 원뿔 길이. 적이 "이 반경 안이면 무조건 들킨다"의 기준으로 쓴다.</summary>
-        public float LitConeRange => ConeRangeLit;
+        public float LitConeRange => torch != null && torch.Level == LanternLevel.Weak ? WeakRange : ConeRangeLit;
+        /// <summary>약하게 켰을 때의 원뿔 길이 - 꺼진 길이와 강하게 켠 길이 사이.</summary>
+        private float WeakRange => Mathf.Lerp(ConeRangeUnlit, ConeRangeLit, weakRangeT);
+
+        [Header("등불 약하게 (피드백 2026-10-29)")]
+        [Tooltip("약하게 켰을 때 원뿔 길이가 꺼짐→강함 사이 어디쯤인가")]
+        [SerializeField, Range(0f, 1f)] private float weakRangeT = 0.45f;
+        [SerializeField] private float coneIntensityWeak = 0.75f;
+        [Tooltip("등불 빛 색. 길가 등불과 같은 따뜻한 노란빛 - 적 횃불(붉은빛)과 구분된다")]
+        [SerializeField] private Color lanternColor = new(1f, 0.82f, 0.52f, 1f);
+        [Tooltip("불을 껐을 때 눈에 들어오는 빛 색 (달빛)")]
+        [SerializeField] private Color unlitColor = new(0.62f, 0.70f, 0.95f, 1f);
+        [Header("등불 원 (2026-10-31 - 요마와리 레퍼런스, 원뿔 대신 손에 든 등불 하나)")]
+        [Tooltip("끄면 마우스 쪽 원뿔 빛을 쓰지 않고 몸 둘레 원 하나로만 비춘다")]
+        [SerializeField] private bool useCone = false;
+        [Tooltip("강하게 켰을 때 원 반경 (m). 꺼지면 근접 시야 반경으로 줄어든다")]
+        [SerializeField] private float lanternRadiusLit = 6.5f;
+        [SerializeField] private float lanternRadiusWeak = 5.2f;
+        [Tooltip("걸을 때 손에 든 등불이 좌우로 흔들리는 폭 (m)")]
+        [SerializeField] private float swayMeters = 0.14f;
+        [Tooltip("걸음마다 위아래로 출렁이는 폭 (m)")]
+        [SerializeField] private float swayBob = 0.06f;
+        [Tooltip("한 번 좌우로 오가는 데 걷는 거리 (m) - 걷기 그림 한 바퀴(2.2m)와 맞춘다")]
+        [SerializeField] private float swayCycleMeters = 2.2f;
+        [Tooltip("불꽃 일렁임 - 밝기가 흔들리는 비율")]
+        [SerializeField, Range(0f, 0.3f)] private float flicker = 0.08f;
+        [Tooltip("불꽃 일렁임 - 원 크기가 숨 쉬는 비율")]
+        [SerializeField, Range(0f, 0.1f)] private float radiusBreath = 0.025f;
+        private float _currentRadius = 4f, _swayPhase, _swayAmp, _noiseSeed;
+        private Rigidbody2D _rb;
+
+        /// <summary>
+        /// 손에 든 등불 - 걸으면 걸음에 맞춰 좌우로 흔들리고 출렁이며, 불꽃은 늘 조금씩 일렁인다.
+        /// 달리면 더 크게 흔들리고 더 거칠게 일렁인다. 멈추면 천천히 가라앉는다.
+        /// 판정(IsInVision · 적 탐지)은 흔들림과 상관없이 반경 숫자 그대로다.
+        /// </summary>
+        private void UpdateLantern(bool lit, bool weak)
+        {
+            if (!proximityLight) return;
+            float dt = Time.deltaTime;
+            float target = !lit ? ProximityRadius : weak ? lanternRadiusWeak : lanternRadiusLit;
+            _currentRadius = Mathf.Lerp(_currentRadius, target, 1f - Mathf.Exp(-transitionLerp * dt));
+
+            if (_rb == null) _rb = player.GetComponent<Rigidbody2D>();
+            float speed = _rb ? _rb.linearVelocity.magnitude : 0f;
+            _swayPhase += speed / Mathf.Max(0.1f, swayCycleMeters) * dt;
+            float moving = Mathf.Clamp01(speed / 5.6f);                       // 달리기 속도에서 1
+            _swayAmp = Mathf.Lerp(_swayAmp, moving, 1f - Mathf.Exp(-(moving > _swayAmp ? 10f : 3f) * dt));   // 멈추면 천천히 가라앉는다
+            float ph = _swayPhase * Mathf.PI * 2f;
+            float k = lit ? _swayAmp : _swayAmp * 0.3f;                      // 불이 꺼지면 눈만 움직인다
+            Vector3 sway = new Vector3(Mathf.Sin(ph) * swayMeters, -Mathf.Abs(Mathf.Cos(ph)) * swayBob, 0f) * k;
+            proximityLight.transform.localPosition += sway;
+
+            float t = Time.time;
+            float n = (Mathf.PerlinNoise(_noiseSeed, t * 5f) - 0.5f) * 1.4f + (Mathf.PerlinNoise(_noiseSeed + 13f, t * 13f) - 0.5f) * 0.6f;
+            float fl = lit ? flicker * (1f + _swayAmp * 0.8f) : flicker * 0.2f;   // 달리면 바람에 더 거칠게
+            proximityLight.intensity *= 1f + n * fl * 2f;
+            proximityLight.pointLightOuterRadius = _currentRadius * (1f + n * radiusBreath * (lit ? 1f : 0.3f));
+            // 켜져 있으면 밝은 속을 넓게 - 방 안에서 세게 들면 벽까지 불빛이 맺힌다 (2026-11-01, 가장자리는 그대로 부드럽다)
+            float core = !lit ? Mathf.Lerp(0.35f, 0f, EdgeBlur) : weak ? 0.18f : 0.3f;
+            proximityLight.pointLightInnerRadius = proximityLight.pointLightOuterRadius * core;
+        }
+
         public float CurrentHalfAngle => _currentFov * 0.5f;
         public float CurrentConeRange => _currentRange;
         public Vector2 ConeDirection => player ? player.AimDirection : Vector2.right;
@@ -62,6 +124,7 @@ namespace Capstone.Player
         private float _currentRange;
         private float _currentIntensity;
         private float _lightAngle;
+        private float _colorT;
 
         private void Awake()
         {
@@ -72,6 +135,8 @@ namespace Capstone.Player
             _currentFov = FovNormal;
             _currentRange = ConeRangeUnlit;
             _currentIntensity = coneIntensityUnlit;
+            _currentRadius = ProximityRadius;
+            _noiseSeed = Random.value * 50f;
         }
 
         private void Start()
@@ -93,8 +158,13 @@ namespace Capstone.Player
 
             // --- 목표값 계산
             float targetFov       = player.IsAiming ? FovAiming : FovNormal;
-            float targetRange     = lit ? ConeRangeLit : ConeRangeUnlit;
-            float targetIntensity = lit ? coneIntensityLit : coneIntensityUnlit;
+            bool weak = lit && torch.Level == LanternLevel.Weak;
+            float targetRange     = !lit ? ConeRangeUnlit : weak ? WeakRange : ConeRangeLit;
+            float targetIntensity = !lit ? coneIntensityUnlit : weak ? coneIntensityWeak : coneIntensityLit;
+            _colorT = Mathf.Lerp(_colorT, lit ? 1f : 0f, 1f - Mathf.Exp(-transitionLerp * Time.deltaTime));
+            Color c = Color.Lerp(unlitColor, lanternColor, _colorT);
+            if (coneLight) coneLight.color = c;
+            if (proximityLight) proximityLight.color = c;
 
             float t = 1f - Mathf.Exp(-transitionLerp * Time.deltaTime);   // 프레임레이트 독립 보간
             _currentFov       = Mathf.Lerp(_currentFov, targetFov, t);
@@ -123,7 +193,15 @@ namespace Capstone.Player
             }
 
             if (proximityLight)
-                proximityLight.intensity = (lit ? proximityIntensity * 1.15f : proximityIntensity) * brightness;
+                proximityLight.intensity = (lit ? proximityIntensity * (torch.Level == LanternLevel.Weak ? 1.0f : 1.2f) : proximityIntensity * 0.8f) * brightness;
+
+            if (!useCone)
+            {
+                if (coneLight && coneLight.enabled) coneLight.enabled = false;
+                if (proximityLight && lit) proximityLight.intensity = (weak ? coneIntensityWeak : coneIntensityLit) * brightness;   // 원 하나가 등불 몫까지 비춘다
+                UpdateLantern(lit, weak);
+            }
+            else if (coneLight && !coneLight.enabled) coneLight.enabled = true;
         }
 
         /// <summary>
@@ -217,6 +295,7 @@ namespace Capstone.Player
             Vector2 delta = worldPoint - origin;
             float dist = delta.magnitude;
 
+            if (!useCone) return dist <= Mathf.Max(ProximityRadius, _currentRadius);   // 등불 원
             if (dist <= ProximityRadius) return true;                 // 근접 시야
             if (dist > _currentRange) return false;                   // 원뿔 사거리 밖
 

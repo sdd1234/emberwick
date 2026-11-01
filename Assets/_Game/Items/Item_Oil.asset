@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Items.ItemDefinition
   displayName: "\uB4F1\uC720"
   description: "\uBD88\uC528\uB97C \uCC44\uC6B4\uB2E4. \uBE5B\uC740 \uACE7 \uC218\uBA85\uC774\uB2E4."
-  icon: {fileID: 21300000, guid: 7b2896e794df0f94781506ac950bd28c, type: 3}
+  icon: {fileID: 21300000, guid: 605d888fe7054bc41b883d60de017321, type: 3}
   grade: 0
   gridWidth: 1
   gridHeight: 2
@@ -22,3 +22,5 @@ MonoBehaviour:
   weight: 0.8
   stackable: 0
   maxStack: 1
+  healAmount: 0
+  stopsBleeding: 0

@@ -17,7 +17,7 @@ namespace Capstone.UI
     {
         [Header("모양")]
         [SerializeField] private float cellSize = 56f;
-        [SerializeField] private float cellGap = 3f;
+        [SerializeField] private float cellGap = 4f;          // 2배 도트 2점 - 홀수면 칸이 반 점씩 어긋난다
 
         [Header("색")]
         [SerializeField] private Color cellColor    = new(0.15f, 0.145f, 0.155f, 0.95f);
@@ -125,6 +125,7 @@ namespace Capstone.UI
                 rt.anchoredPosition = CellToLocal(x, y);
 
                 img.color = cellColor;
+                if (PixelSkin.Slot != null) PixelSkin.Apply(img, PixelSkin.Slot, new Color(0.85f, 0.85f, 0.85f), 2f);   // 도트 칸 - 12x12 틀을 2배 도트로 (다른 HUD 와 같은 점 크기)
                 img.raycastTarget = true;        // 빈 칸에도 드롭할 수 있어야 한다
                 _cells.Add(img.gameObject);
             }

@@ -48,7 +48,8 @@ namespace Capstone.Player
         {
             // 사격처럼 잠깐 띄운 원이 남아 있는 동안은 발소리 원으로 덮지 않는다
             if (Time.time < _holdUntil) return;
-            _visible = visible && radius > 0f;
+            // 걷기 원은 숨긴다 (2026-11-01) - 늘 떠 있어 등불 · 어둠을 가린다. 뛰기처럼 시끄러울 때만 경고로 띄운다
+            _visible = visible && loud && radius > 0f;
             if (!_visible) return;
             _color = loud ? runColor : walkColor;
             SetRadius(radius);
