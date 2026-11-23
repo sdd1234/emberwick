@@ -210,8 +210,8 @@ namespace Capstone.EditorTools
                 Set(an, "walkFps", 6f);
                 root.GetComponent<SpriteRenderer>().sprite = S("cultist_idle");
                 var ai = root.GetComponent<RangedEnemy>();
-                Set(ai, "sightConeRange", 10f);
-                Set(ai, "sightConeAngle", 110f);
+                Set(ai, "sightConeRange", Feedback1110Setup.EnemySightRange);
+                Set(ai, "sightConeAngle", Feedback1110Setup.EnemySightAngle);
                 if (S("item_flask")) Set(ai, "flaskSprite", S("item_flask"));
                 if (S("corpse_cultist")) Set(root.GetComponent<EnemyCorpse>(), "corpseSprite", S("corpse_cultist"));
             });
@@ -254,8 +254,8 @@ namespace Capstone.EditorTools
                 var so = new SerializedObject(rogue);
                 so.FindProperty("senseMode").enumValueIndex = (int)SenseMode.Sight;
                 so.FindProperty("noticeRadius").floatValue = 3f;
-                so.FindProperty("sightConeRange").floatValue = 9f;
-                so.FindProperty("sightConeAngle").floatValue = 120f;
+                so.FindProperty("sightConeRange").floatValue = Feedback1110Setup.EnemySightRange;
+                so.FindProperty("sightConeAngle").floatValue = Feedback1110Setup.EnemySightAngle;
                 so.FindProperty("sightBlockMask").intValue = 1 << wall;
                 so.FindProperty("moveSpeed").floatValue = 3.6f;
                 so.FindProperty("loseInterestTime").floatValue = 5f;

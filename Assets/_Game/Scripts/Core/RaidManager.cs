@@ -14,8 +14,8 @@ namespace Capstone.Core
         [Header("플레이어")]
         [SerializeField] private GameObject player;
 
-        [Header("제한 시간 (기획서 6.5 - 레이드 20분)")]
-        [SerializeField] private float raidMinutes = 20f;
+        [Header("제한 시간 (2026-11-04 본인 요청 - 레이드 5분)")]
+        [SerializeField] private float raidMinutes = 5f;
         [SerializeField] private bool useTimeLimit = true;
 
         [Header("결과 색")]
@@ -66,6 +66,7 @@ namespace Capstone.Core
             TimeRemaining = raidMinutes * 60f;
             if (deathPanel) deathPanel.SetActive(false);
             if (extractText) extractText.gameObject.SetActive(false);
+            FX.SfxBank.Play2D("raid_enter");
         }
 
         private void OnDestroy()
@@ -91,6 +92,10 @@ namespace Capstone.Core
         {
             if (IsExtracted || IsDead) return;
             IsExtracted = true;
+            // 탈출이 끝났으면 더는 맞지 않는다 - 페이드 동안 곁의 적이 죽이면 성공 화면 위에 사망이 덮이고 전리품을 다시 정산한다
+            if (_health != null) _health.Invulnerable = true;
+            FX.SfxBank.PlayOn("result", "escape_succeed");
+            FX.GameMusic.Silence(9.5f);       // 탈출 음악이 끝난 뒤에 마을 곡이 올라온다
 
             SetPlayerControlEnabled(false);
             var interactor = player.GetComponent<Items.Interactor>();
@@ -146,8 +151,10 @@ namespace Capstone.Core
 
         private void HandleDeath()
         {
-            if (IsDead) return;
+            if (IsDead || IsExtracted) return;
             IsDead = true;
+            FX.SfxBank.PlayOn("result", "player_dead");
+            FX.GameMusic.Silence(5f);
 
             // 죽은 동안 조작을 막는다
             SetPlayerControlEnabled(false);

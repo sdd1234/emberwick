@@ -66,7 +66,15 @@ namespace Capstone.Items
                 }
             }
 
-            return Grid.TryAutoPlace(new GridItem { Def = item, Count = count });
+            // 한 칸에 maxStack 까지만 - 넘치면 칸을 나눈다
+            int perSlot = item.stackable ? Mathf.Max(1, item.maxStack) : Mathf.Max(1, count);
+            while (count > 0)
+            {
+                int put = Mathf.Min(count, perSlot);
+                if (!Grid.TryAutoPlace(new GridItem { Def = item, Count = put })) return false;
+                count -= put;
+            }
+            return true;
         }
 
         public bool Remove(GridItem item) => Grid.Remove(item);

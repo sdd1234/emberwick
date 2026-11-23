@@ -92,14 +92,23 @@ namespace Capstone.Items
         {
             if (item == null || WouldExceedWeight(item)) return false;
 
-            for (int pass = 0; pass < 2; pass++)
+            // 같은 물건 더미에 먼저 얹는다. 남는 게 있는데 자리가 없으면 아무것도 건드리지 않는다
+            int room = 0;
+            foreach (var stack in _items) if (CanStack(item, stack)) room += item.Def.maxStack - stack.Count;
+            int x = 0, y = 0;
+            bool rot = false;
+            if (item.Count > room && !FindSpot(item, out x, out y, out rot)) return false;
+
+            foreach (var stack in _items)
             {
-                bool rot = pass == 1;
-                for (int y = 0; y < Rows; y++)
-                for (int x = 0; x < Columns; x++)
-                    if (CanPlace(item, x, y, rot)) return Place(item, x, y, rot);
+                if (item.Count <= 0) break;
+                if (!CanStack(item, stack)) continue;
+                int n = Mathf.Min(item.Count, item.Def.maxStack - stack.Count);
+                stack.Count += n; item.Count -= n;
             }
-            return false;
+            if (item.Count > 0) return Place(item, x, y, rot);
+            OnChanged?.Invoke();
+            return true;
         }
 
         public bool TryAutoPlace(ItemDefinition def, int count = 1)
@@ -118,6 +127,86 @@ namespace Capstone.Items
 
             source.Remove(item);
             return Place(item, x, y, rotated);
+        }
+
+        /// <summary>다른 격자에서 알아서 옮긴다 (Alt+좌클릭). 같은 물건 더미에 먼저 얹고, 남으면 빈 자리에 놓는다.</summary>
+        public bool QuickMoveFrom(ItemGrid source, GridItem item)
+        {
+            if (source == null || item == null || ReferenceEquals(source, this)) return false;
+
+            int moved = 0;
+            int canCarry = CarryRoom(item.Def);
+            foreach (var stack in _items)
+            {
+                if (item.Count <= 0 || moved >= canCarry) break;
+                if (!CanStack(item, stack)) continue;
+                int n = Mathf.Min(item.Count, Mathf.Min(item.Def.maxStack - stack.Count, canCarry - moved));
+                stack.Count += n; item.Count -= n; moved += n;
+            }
+
+            if (item.Count <= 0) source.Remove(item);
+            else if (moved + item.Count <= canCarry && FindSpot(item, out int x, out int y, out bool rot))
+            {
+                source.Remove(item);
+                return Place(item, x, y, rot);
+            }
+            else if (moved > 0) source.RaiseChanged();
+
+            if (moved > 0) OnChanged?.Invoke();
+            return moved > 0;
+        }
+
+        /// <summary>끌어다 같은 물건 위에 놓았을 때 얹는다. 다 안 들어가면 나머지는 원래 자리에 남는다.</summary>
+        public bool StackFrom(ItemGrid source, GridItem item, GridItem stack)
+        {
+            if (source == null || !CanStack(item, stack)) return false;
+
+            int n = Mathf.Min(item.Count, item.Def.maxStack - stack.Count);
+            if (!ReferenceEquals(source, this)) n = Mathf.Min(n, CarryRoom(item.Def));
+            if (n <= 0) return false;
+
+            stack.Count += n; item.Count -= n;
+            if (item.Count <= 0) source.Remove(item); else source.RaiseChanged();
+            OnChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>item 을 stack 위에 얹을 수 있는가. 감정 전 물건은 정체를 들키므로 합치지 않는다.</summary>
+        public static bool CanStack(GridItem item, GridItem stack)
+            => item != null && stack != null && !ReferenceEquals(item, stack) && item.Def == stack.Def
+               && item.Def != null && item.Def.stackable && item.Identified && stack.Identified && stack.Count < item.Def.maxStack;
+
+        /// <summary>이 물건이 몇 개까지 더 들어가는지. 사본에 실제로 넣어 보고 센다 (limit 까지만).</summary>
+        public int FitCount(ItemDefinition def, int limit)
+        {
+            if (def == null) return 0;
+            var sim = new ItemGrid(Columns, Rows, MaxWeight);
+            foreach (var it in _items)
+                sim.Place(new GridItem { Def = it.Def, Count = it.Count, Identified = it.Identified }, it.X, it.Y, it.Rotated);
+
+            int n = 0;
+            while (n < limit && sim.TryAutoPlace(new GridItem { Def = def, Count = 1, Identified = true })) n++;
+            return n;
+        }
+
+        /// <summary>무게 제한으로 이 물건을 몇 개까지 더 받을 수 있는지.</summary>
+        private int CarryRoom(ItemDefinition def)
+        {
+            if (MaxWeight <= 0f || def == null || def.weight <= 0f) return int.MaxValue;
+            return Mathf.Max(0, Mathf.FloorToInt((MaxWeight - CurrentWeight) / def.weight + 0.001f));
+        }
+
+        private bool FindSpot(GridItem item, out int x, out int y, out bool rotated)
+        {
+            x = y = 0; rotated = false;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                rotated = pass == 1;
+                for (y = 0; y < Rows; y++)
+                for (x = 0; x < Columns; x++)
+                    if (CanPlace(item, x, y, rotated)) return true;
+            }
+            return false;
         }
 
         public bool Remove(GridItem item)

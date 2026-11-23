@@ -94,6 +94,8 @@ namespace Capstone.UI
                 return;
             }
 
+            FX.SfxBank.Play2D("player_hit", 0.9f, 0.04f);
+
             float t = Mathf.Clamp01(amount / Mathf.Max(1f, damageForFullFlash));
             // 연속으로 맞으면 더 진해지되, 시간은 항상 처음부터 다시 센다
             _peak = Mathf.Clamp01(Mathf.Max(_peak, Mathf.Lerp(0.45f, 1f, t)));

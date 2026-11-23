@@ -23,13 +23,10 @@ namespace Capstone.Player
         [Tooltip("이 속도(m/s)보다 느리면 걷는 걸로 치지 않는다")]
         [SerializeField] private float minSpeed = 0.4f;
 
-        [Header("소리")]
-        [SerializeField] private AudioSource source;
-        [SerializeField] private AudioClip[] walkClips;
-        [SerializeField] private AudioClip[] runClips;
-        [SerializeField, Range(0f, 1f)] private float walkVolume = 0.3f;
-        [SerializeField, Range(0f, 1f)] private float runVolume = 0.55f;
-        [SerializeField] private Vector2 pitchJitter = new(0.92f, 1.08f);
+        [Header("소리 (11-03 - 흙 · 풀 걷기, 뛰기는 지면 공통)")]
+        [SerializeField, Range(0f, 1f)] private float walkSoundVolume = 1f;
+        [SerializeField, Range(0f, 1f)] private float runSoundVolume = 1f;
+        [SerializeField] private float pitchSpread = 0.06f;
 
         [Header("시각화")]
         [Tooltip("소리가 닿는 최대 거리를 보여주는 원. 플레이어 발밑에 하나만 만들어 계속 쓴다. 비우면 소리만 난다")]
@@ -39,7 +36,6 @@ namespace Capstone.Player
         private PlayerController _player;
         private Rigidbody2D _body;
         private float _nextStepAt;
-        private int _lastClip = -1;
         private NoiseRing _ring;
 
         /// <summary>지금 내고 있는 소음 반경. 가만히 있으면 0.</summary>
@@ -49,7 +45,6 @@ namespace Capstone.Player
         {
             _player = GetComponent<PlayerController>();
             _body = GetComponent<Rigidbody2D>();
-            if (!source) source = GetComponent<AudioSource>();
         }
 
         private void OnDestroy()
@@ -105,17 +100,8 @@ namespace Capstone.Player
 
             Core.NoiseSystem.Emit(feet, radius, gameObject);
 
-            var clips = running && runClips != null && runClips.Length > 0 ? runClips : walkClips;
-            if (source && clips != null && clips.Length > 0)
-            {
-                // 같은 발소리가 연달아 나면 기계음처럼 들린다
-                int i = Random.Range(0, clips.Length);
-                if (clips.Length > 1 && i == _lastClip) i = (i + 1) % clips.Length;
-                _lastClip = i;
-                source.pitch = Random.Range(pitchJitter.x, pitchJitter.y);
-                source.PlayOneShot(clips[i], running ? runVolume : walkVolume);
-            }
-
+            if (running) FX.SfxBank.Play2D("run", runSoundVolume, pitchSpread);
+            else FX.SfxBank.Play2D(Map.GroundSurface.IsGrass(feet) ? "walk_grass" : "walk_dirt", walkSoundVolume, pitchSpread);
         }
     }
 }

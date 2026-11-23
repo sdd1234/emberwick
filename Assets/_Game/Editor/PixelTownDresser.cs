@@ -186,7 +186,7 @@ namespace Capstone.EditorTools
             var vig = prof.TryGet<Vignette>(out var v) ? v : prof.Add<Vignette>(true);
             vig.intensity.Override(0.32f); vig.smoothness.Override(0.5f); vig.color.Override(new Color(0.02f, 0.02f, 0.05f));
             var ca = prof.TryGet<ColorAdjustments>(out var c2) ? c2 : prof.Add<ColorAdjustments>(true);
-            ca.contrast.Override(16f); ca.saturation.Override(-12f); ca.postExposure.Override(0.1f); ca.colorFilter.Override(Color.white);
+            ca.contrast.Override(16f); ca.saturation.Override(-12f); ca.postExposure.Override(Feedback1110Setup.TownExposure);   // 2026-11-10 밝기 +50% ca.colorFilter.Override(Color.white);
             // 레이드(PlagueNight)와 같은 결 - 그늘은 차갑게, 불빛은 따뜻하게
             var smh = prof.TryGet<ShadowsMidtonesHighlights>(out var sm) ? sm : prof.Add<ShadowsMidtonesHighlights>(true);
             smh.shadows.Override(new Vector4(0.85f, 0.92f, 1.15f, -0.05f)); smh.highlights.Override(new Vector4(1.1f, 1.02f, 0.9f, 0.05f));

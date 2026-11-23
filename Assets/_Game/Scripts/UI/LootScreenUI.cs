@@ -16,6 +16,8 @@ namespace Capstone.UI
     public class LootScreenUI : MonoBehaviour
     {
         [Header("대상")]
+        [Tooltip("Tab 으로 가방만 여는 단축키. 마을은 Tab 이 창고 화면(ShopUI)이라 끈다")]
+        [SerializeField] private bool bagHotkey = true;
         [SerializeField] private Interactor interactor;
         [SerializeField] private PlayerInventory inventory;
         [SerializeField] private Combat.Crossbow crossbow;
@@ -48,12 +50,6 @@ namespace Capstone.UI
         [SerializeField] private TMP_Text weightText;
         [SerializeField] private TMP_Text hintText;
 
-        [Header("감정 소리 (피드백)")]
-        [SerializeField] private AudioSource sfxSource;
-        [Tooltip("등급 순서대로 - 일반 / 레어 / 유니크 / 전설")]
-        [SerializeField] private AudioClip[] revealClips = new AudioClip[4];
-        [SerializeField, Range(0f, 1f)] private float revealVolume = 0.8f;
-
         /// <summary>어떤 격자 화면이든 열려 있으면 true. 조준점과 사격을 끄는 데 쓴다.</summary>
         public static bool AnyScreenOpen { get; private set; }
 
@@ -74,6 +70,7 @@ namespace Capstone.UI
         {
             AnyScreenOpen = false;
             Listen(null);
+            StopSearchSounds();
         }
 
         // ---------- 감정 소리 ----------
@@ -90,13 +87,28 @@ namespace Capstone.UI
 
         private void PlayReveal(GridItem item)
         {
-            if (item == null || item.Def == null || sfxSource == null || revealClips == null) return;
-            int g = Mathf.Clamp((int)item.Def.grade, 0, revealClips.Length - 1);
-            if (revealClips[g] != null) sfxSource.PlayOneShot(revealClips[g], revealVolume);
+            if (item == null || item.Def == null) return;
+            FX.SfxBank.Play2D("item_get_" + item.Def.grade.ToString().ToLowerInvariant());
+        }
+
+        /// <summary>판정이 도는 동안 나는 소리. 시체는 뒤적이는 소리가 하나 더 깔린다.</summary>
+        private void UpdateSearchSounds()
+        {
+            bool appraising = _open != null && _open.IsBeingSearched && _open.Revealing != null;
+            FX.SfxBank.Loop("appraise", "during_appraise", 1f, appraising);
+            FX.SfxBank.Loop("rummage", "dummy_find", 1f, appraising && _open.IsCorpse);
+        }
+
+        private static void StopSearchSounds()
+        {
+            FX.SfxBank.StopChannel("appraise");
+            FX.SfxBank.StopChannel("rummage");
         }
 
         private void Update()
         {
+            if (KeyBindPanel.BlocksInput) return;
+
             var searching = interactor != null ? interactor.Searching : null;
             var kb = Keyboard.current;
 
@@ -111,7 +123,7 @@ namespace Capstone.UI
             }
 
             // Tab - 가방만 열고 닫기 (기획서 8.2)
-            if (kb != null && kb.tabKey.wasPressedThisFrame && searching == null)
+            if (bagHotkey && kb != null && kb.tabKey.wasPressedThisFrame && searching == null)
             {
                 if (_bagOnly) CloseAll();
                 else OpenBagOnly();
@@ -121,6 +133,7 @@ namespace Capstone.UI
             if (searching != null && searching != _open) OpenWithContainer(searching);
             else if (searching == null && _open != null) { _open = null; CloseAll(); }
 
+            UpdateSearchSounds();
             if (!AnyScreenOpen) return;
 
             if (_open != null)
@@ -137,6 +150,9 @@ namespace Capstone.UI
         private void OpenWithContainer(LootContainer box)
         {
             _open = box; _bagOnly = false;
+            lootPanel.QuickTarget = bagPanel;
+            bagPanel.QuickTarget = lootPanel;
+            if (securePanel) securePanel.QuickTarget = bagPanel;
             SetOpen(true);
             if (lootSide) lootSide.gameObject.SetActive(true);
             if (progressBar) progressBar.gameObject.SetActive(true);
@@ -145,12 +161,14 @@ namespace Capstone.UI
             bagPanel.Bind(inventory.Grid, "가방");
             if (securePanel) securePanel.Bind(Core.GameSession.Secure, "중요 보관함  (사망해도 유지)");
             Listen(box);
-            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [F] / [ESC] 닫기";
+            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [Alt+클릭] 바로 옮기기   ·   [F] / [ESC] 닫기";
         }
 
         private void OpenBagOnly()
         {
             _open = null; _bagOnly = true;
+            bagPanel.QuickTarget = securePanel;
+            if (securePanel) securePanel.QuickTarget = bagPanel;
             SetOpen(true);
             if (lootSide) lootSide.gameObject.SetActive(false);
             if (progressBar) progressBar.gameObject.SetActive(false);
@@ -159,7 +177,7 @@ namespace Capstone.UI
             bagPanel.Bind(inventory.Grid, "가방");
             if (securePanel) securePanel.Bind(Core.GameSession.Secure, "중요 보관함  (사망해도 유지)");
             Listen(null);
-            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [Tab] / [ESC] 닫기";
+            if (hintText) hintText.text = "드래그로 옮기기   ·   들고 [R] 90도 회전   ·   우클릭 사용(붕대)   ·   [Alt+클릭] 바로 옮기기   ·   [Tab] / [ESC] 닫기";
         }
 
         private void CloseAll()
@@ -174,6 +192,7 @@ namespace Capstone.UI
 
         private void SetOpen(bool on)
         {
+            if (on != AnyScreenOpen) FX.SfxBank.Play2D(on ? "inventory_open" : "inventory_close");
             AnyScreenOpen = on;
             if (root) root.gameObject.SetActive(on);
 
@@ -233,7 +252,6 @@ namespace Capstone.UI
             if (bagPanel == null && bagSide != null) bagPanel = bagSide.GetComponentInChildren<GridPanelUI>(true);
             var secureSide = root.Find("SecureSide");
             if (securePanel == null && secureSide != null) securePanel = secureSide.GetComponentInChildren<GridPanelUI>(true);
-            if (sfxSource == null) sfxSource = GetComponent<AudioSource>();
 
             if (progressBar == null && lootSide != null) progressBar = lootSide.Find("ProgressBG") as RectTransform;
             if (progressFill == null && progressBar != null)

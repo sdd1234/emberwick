@@ -160,8 +160,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.MeleeEnemy
   senseMode: 1
   noticeRadius: 3
-  sightConeRange: 7
-  sightConeAngle: 100
+  sightConeRange: 4
+  sightConeAngle: 180
   canHear: 1
   hearingMultiplier: 1
   keepChasingOnceSeen: 1
@@ -170,6 +170,7 @@ MonoBehaviour:
   detectRange: 15
   unlitRangeMultiplier: 0.25
   litAlertRadius: 0
+  weakLightRangeMultiplier: 0.55
   sightBlockMask:
     serializedVersion: 2
     m_Bits: 1024

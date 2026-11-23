@@ -37,8 +37,7 @@ namespace Capstone.Player
 
         private void Update()
         {
-            var kb = Keyboard.current;
-            if (kb == null || !kb.gKey.wasPressedThisFrame || UI.LootScreenUI.AnyScreenOpen) return;
+            if (!Core.KeyBindings.Pressed(Core.GameAction.Flask) || UI.LootScreenUI.AnyScreenOpen) return;
             if (Time.time < _readyAt) return;
             if (_torch == null || !_torch.TrySpend(fuelCost)) { UI.HUDController.Toast($"불씨가 모자라다 (빛 플라스크 {fuelCost:0}%)"); return; }
 

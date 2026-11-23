@@ -80,6 +80,7 @@ namespace Capstone.Combat
         private float _reloadEnd;
         private bool  _loaded = true;
         private bool  _fullChargeNotified;
+        private bool  _reloadSounded;
 
         private LayerMask _wall;
 
@@ -125,6 +126,7 @@ namespace Capstone.Combat
         {
             IsCharging = true;
             _chargeStart = Time.time;
+            FX.SfxBank.PlayOn("charge", "crossbow_start_chaging");
             CurrentLevel = 0;
             _fullChargeNotified = false;
         }
@@ -137,6 +139,7 @@ namespace Capstone.Combat
             int level = 0;
             for (int i = 0; i < levels.Length; i++)
                 if (held >= levels[i].chargeTime) level = i;
+            if (level != CurrentLevel) FX.SfxBank.Play2D(level == 1 ? "crossbow_1st_charging" : "crossbow_2nd_charging");
             CurrentLevel = level;
 
             // 다음 단계까지의 진행도
@@ -185,6 +188,7 @@ namespace Capstone.Combat
             _loaded = false;
             IsReloading = true;
             _reloadEnd = Time.time + reloadTime;
+            _reloadSounded = false;
             OnFired?.Invoke(CurrentLevel);
         }
 
@@ -208,7 +212,7 @@ namespace Capstone.Combat
             float offset = UnityEngine.Random.Range(-halfSpreadDeg, halfSpreadDeg);
             Vector2 dir = (Quaternion.Euler(0f, 0f, offset) * baseDir).normalized;
 
-            FX.SfxBank.Play("bow_shoot", origin, isCrit ? 1f : 0.8f);
+            FX.SfxBank.Play2D(isCrit || CurrentLevel == levels.Length - 1 ? "crossbow_shot_strong" : "crossbow_shot_weak", 1f, 0.03f);
             Player.CameraFollow.KickMain(-dir, isCrit ? 0.12f : 0.05f + 0.02f * CurrentLevel);   // 쏜 반대쪽으로 반동
             FX.Vfx.Play("vfx_muzzle", origin + Vector2.up * 0.9f + player.AimDirection * 0.5f, player.AimDirection.x < 0f);
             var bolt = Instantiate(boltPrefab, origin, Quaternion.identity);
@@ -221,6 +225,7 @@ namespace Capstone.Combat
 
         private void CancelCharge()
         {
+            if (IsCharging) FX.SfxBank.StopChannel("charge");
             IsCharging = false;
             ChargeProgress = 0f;
             if (player) player.ExternalSpeedMultiplier = 1f;   // 속도 페널티 해제
@@ -231,6 +236,8 @@ namespace Capstone.Combat
             if (!IsReloading) return;
 
             ReloadProgress = 1f - Mathf.Clamp01((_reloadEnd - Time.time) / reloadTime);
+            // 쏜 소리가 가라앉은 뒤에 시위를 건다. 소리가 장전 끝과 같이 끝나게
+            if (!_reloadSounded && ReloadProgress >= 0.25f) { _reloadSounded = true; FX.SfxBank.Play2D("crossbow_reload"); }
             if (Time.time < _reloadEnd) return;
 
             IsReloading = false;

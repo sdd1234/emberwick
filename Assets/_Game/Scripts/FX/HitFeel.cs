@@ -35,7 +35,7 @@ namespace Capstone.FX
             _health.OnHit += OnHit;
             _health.OnDeath += () =>
             {
-                SfxBank.Play("death", transform.position, 0.9f);
+                if (GetComponent<Player.PlayerController>() == null) SfxBank.Play("death", transform.position, 0.9f);   // 내 죽음은 RaidManager 가 음악으로
                 var fm = GetComponent<Core.FactionMember>();
                 Vector2 c = (Vector2)transform.position + Vector2.up * 0.9f;
                 if (fm != null && fm.Faction == Core.Faction.Infected) Vfx.Play("vfx_smoke", c + Vector2.up * 0.4f, false, 46, 0.8f);   // 감염자는 역병 연기로 흩어진다
@@ -56,7 +56,9 @@ namespace Capstone.FX
             Vector2 chest = (Vector2)transform.position + Vector2.up * 1.1f;
             bool byPlayer = source != null && source.GetComponent<Player.PlayerController>() != null;
 
-            SfxBank.Play(result == Combat.HitResult.Resisted ? "hit_resist" : result == Combat.HitResult.Weakness ? "hit_weak" : "hit_flesh", chest, result == Combat.HitResult.Pierced ? 1f : 0.8f);
+            // 내가 맞는 소리는 DamageFeedback 이 낸다
+            if (GetComponent<Player.PlayerController>() == null)
+                SfxBank.Play(result == Combat.HitResult.Resisted ? "hit_resist" : result == Combat.HitResult.Weakness ? "hit_weak" : byPlayer && type == Combat.DamageType.Physical ? "bolt_hit" : "hit_flesh", chest, result == Combat.HitResult.Pierced ? 1f : 0.8f);
             bool left = dir.x < 0f;
             switch (result)
             {

@@ -90,7 +90,7 @@ namespace Capstone.Combat
             Flying.Remove(this);
             _rb.linearVelocity = Vector2.zero;
             _rb.bodyType = RigidbodyType2D.Static;
-            FX.SfxBank.Play("bolt_stick", transform.position, 0.7f);
+            FX.SfxBank.Play("bolt_hit", transform.position, 0.8f);
             // 박힌 자리에서 나뭇조각 · 돌가루가 튀고, 불티 두어 점
             FX.PixelFX.Burst(transform.position, -_direction, new Color(0.36f, 0.3f, 0.24f), new Color(0.62f, 0.56f, 0.46f), 8, 4f, 55f, true, 0.35f);
             FX.PixelFX.Burst(transform.position, -_direction, new Color(1f, 0.8f, 0.45f), Color.white, 2, 5f, 35f, false, 0.15f);

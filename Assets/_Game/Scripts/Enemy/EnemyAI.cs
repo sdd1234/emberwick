@@ -48,14 +48,16 @@ namespace Capstone.Enemy
         [SerializeField] protected float giveUpDistance = 25f;
 
         [Header("탐지 (기획서 7.2)")]
-        [Tooltip("빛을 감지해 의심 상태가 되는 거리 (m)")]
+        [Tooltip("시야각 안에서 불 켠 플레이어를 보고 의심 상태가 되는 거리 (m)")]
         [SerializeField] protected float suspectRange = 25f;
-        [Tooltip("발각 상태로 전환되는 거리 (m)")]
+        [Tooltip("시야각 안에서 불 켠 플레이어를 보고 전투 상태로 전환되는 거리 (m) - 빛 탐지 거리")]
         [SerializeField] protected float detectRange = 15f;
         [Tooltip("플레이어가 불을 껐을 때 위 두 거리에 곱해지는 배율")]
         [SerializeField, Range(0.05f, 1f)] protected float unlitRangeMultiplier = 0.25f;
         [Tooltip("불을 켠 채 이 반경 안이면 벽이든 등 뒤든 무조건 발각된다 (m). 0 이면 플레이어 시야 원뿔 길이를 쓴다")]
         [SerializeField] protected float litAlertRadius = 0f;
+        [Tooltip("등불을 약하게 켰을 때 빛 탐지 거리에 곱하는 배율")]
+        [SerializeField, Range(0.1f, 1f)] protected float weakLightRangeMultiplier = 0.55f;
         [Tooltip("시야가 벽에 막히는지 검사할 레이어")]
         [SerializeField] protected LayerMask sightBlockMask;
         [Tooltip("발각 후 놓쳤을 때 추격을 유지하는 시간 (초)")]
@@ -123,6 +125,19 @@ namespace Capstone.Enemy
         public bool FightingFoe => Foe != null && !_targetPlayer;
         public Core.FactionMember CurrentFoe => Foe;
 
+        private static readonly System.Collections.Generic.List<EnemyAI> _active = new();
+
+        /// <summary>플레이어를 발각해 쫓거나 공격 중인 적이 하나라도 있는가. 적끼리 싸우는 건 치지 않는다.</summary>
+        public static bool AnyChasingPlayer
+        {
+            get
+            {
+                foreach (var e in _active)
+                    if (e.State == AlertState.Alerted && !e.FightingFoe) return true;
+                return false;
+            }
+        }
+
         protected Transform Player;
         protected Combat.PlayerStealth PlayerStealth;
         protected Player.TorchFuel PlayerTorch;
@@ -132,7 +147,6 @@ namespace Capstone.Enemy
 
         private float _loseInterestAt;
         private bool _countedAsDetector;
-        private bool _litAlerted;
 
         // 길찾기 상태
         private readonly List<Vector2> _path = new();
@@ -179,8 +193,6 @@ namespace Capstone.Enemy
             return HasLineOfSightTo(Player.position);
         }
 
-        /// <summary>등 뒤든 어디든 바로 옆이면 알아차린다.</summary>
-        private bool Noticed() => Player != null && !HiddenFromMe() && DistanceToPlayer <= noticeRadius && HasLineOfSightTo(Player.position);
 
         private void UpdateFacing()
         {
@@ -210,6 +222,7 @@ namespace Capstone.Enemy
         protected virtual void Awake()
         {
             Body = GetComponent<Rigidbody2D>();
+            if (GetComponent<EnemyVisibility>() == null) gameObject.AddComponent<EnemyVisibility>();   // 빛 · 시야에 따라 보이는 방식 (2026-11-10)
             Body.gravityScale = 0f;
             Body.freezeRotation = true;
             if (!spriteRenderer) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -227,8 +240,17 @@ namespace Capstone.Enemy
             }
         }
 
-        protected virtual void OnEnable() => Core.NoiseSystem.OnNoise += HandleNoise;
-        protected virtual void OnDisable() => Core.NoiseSystem.OnNoise -= HandleNoise;
+        protected virtual void OnEnable()
+        {
+            _active.Add(this);
+            Core.NoiseSystem.OnNoise += HandleNoise;
+        }
+
+        protected virtual void OnDisable()
+        {
+            _active.Remove(this);
+            Core.NoiseSystem.OnNoise -= HandleNoise;
+        }
 
         /// <summary>
         /// 맞았다. 플레이어가 쐈으면 그 자리를 안다. 적대 진영이 때렸으면 그쪽과 싸운다.
@@ -365,10 +387,18 @@ namespace Capstone.Enemy
             }
 
             if (_hunting) return;                   // 이미 플레이어를 쫓는 중이면 다른 소리에 끌려가지 않는다
+
+            // 수정사항 2026-11-10 - 소리는 무조건 "의심"이다. 소리 난 곳을 보러 가고, 거기서 눈으로 봐야 전투가 된다
+            if (_playerState == AlertState.Alerted && Time.time < _loseInterestAt)
+            {
+                LastKnownPosition = at;                 // 싸우다 놓친 상대가 낸 소리 - 그쪽으로 다시 쫓는다
+                _loseInterestAt = Time.time + loseInterestTime;
+                return;
+            }
             LastKnownPosition = at;
-            _loseInterestAt = Time.time + loseInterestTime;
-            _investigateUntil = Time.time + loseInterestTime;
-            SetPlayerState(AlertState.Alerted);
+            _investigateUntil = Time.time + loseInterestTime * 1.5f;
+            _loseInterestAt = _investigateUntil;
+            SetPlayerState(AlertState.Suspicious);
         }
 
         protected virtual void Start()
@@ -399,63 +429,66 @@ namespace Capstone.Enemy
 
             if (senseMode == SenseMode.Hearing) { UpdateHearingDetection(); return; }
 
+            // 수정사항 2026-11-10 - 적은 앞쪽 180도만 본다. 상태가 바뀌는 길은 셋뿐이다.
+            //   1) 시야각 안 + 기본 시야 거리 안에 보인다          → 전투
+            //   2) 시야각 안 + 불 켠 플레이어가 빛 탐지 거리 안이다 → 전투 (그보다 멀면 의심)
+            //   3) 소음 거리 안이다 (HandleNoise)                 → 무조건 의심, 소리 난 쪽으로 돌아본다
+            // 예전처럼 "불을 켜면 등 뒤든 벽 너머든 들킨다"는 없다 - 등 뒤의 불빛은 못 본다.
             bool lit = PlayerTorch != null && PlayerTorch.IsLit;
-            float mult = lit ? 1f : unlitRangeMultiplier;
-            float suspect = suspectRange * mult;
-            float detect  = detectRange  * mult;
+            bool front = InFrontArc(Player.position) && !HiddenFromMe();
+            bool los = front && HasLineOfSight();
 
-            // 기획서 7.2 - 빛은 시야이자 노출이다.
-            // 불을 켠 채 이 반경 안에 들어오면 벽 뒤든 등 뒤든 상관없이 들킨다.
-            // 어두운 미로에서 불 하나 켜는 것이 곧 "나 여기 있다"가 되어야 점등이 선택이 된다.
-            if (lit && DistanceToPlayer <= LitAlertRadius)
+            if (InSightCone())
             {
-                _litAlerted = true;
-                LastKnownPosition = Player.position;
-                _loseInterestAt = Time.time + loseInterestTime;
-                SetPlayerState(AlertState.Alerted);
+                SpotPlayer();
                 return;
             }
 
-            // 기본 시야 - 불을 꺼도 정면에 서 있으면 보인다. 등 뒤라도 바로 옆이면 알아차린다
-            if (InSightCone() || Noticed())
+            if (lit && los)
             {
-                _litAlerted = false;
+                float k = PlayerTorch.Level == Capstone.Player.LanternLevel.Weak ? weakLightRangeMultiplier : 1f;
+                if (DistanceToPlayer <= detectRange * k) { SpotPlayer(); return; }
+                if (DistanceToPlayer <= suspectRange * k)
+                {
+                    // 이미 쫓는 중이면 의심으로 내려오지 않는다
+                    if (_playerState != AlertState.Alerted || Time.time >= _loseInterestAt)
+                    {
+                        LastKnownPosition = Player.position;
+                        _investigateUntil = Time.time + loseInterestTime;
+                        SetPlayerState(AlertState.Suspicious);
+                    }
+                    return;
+                }
+            }
+
+            // 싸우는 중에는 시야각을 벗어나도 벽에 안 가리면 계속 본다 (고개를 돌려 따라본다)
+            if (_playerState == AlertState.Alerted && Time.time < _loseInterestAt && !HiddenFromMe() && HasLineOfSight()
+                && DistanceToPlayer <= Mathf.Max(detectRange, sightConeRange * 2f))
+            {
                 LastKnownPosition = Player.position;
                 _loseInterestAt = Time.time + loseInterestTime;
-                SetPlayerState(AlertState.Alerted);
                 return;
             }
 
-            // 불이 꺼졌거나 반경을 벗어났다. 빛으로 붙잡아 두던 추격은 그 자리에서 끝난다 -
-            // 아래 일반 판정(시야 + 거리)이 계속 쫓을지를 다시 정한다
-            if (_litAlerted)
-            {
-                _litAlerted = false;
-                _loseInterestAt = 0f;
-            }
-
-            bool hasLineOfSight = HasLineOfSight();
-
-            if (hasLineOfSight && DistanceToPlayer <= detect)
-            {
-                SetPlayerState(AlertState.Alerted);
-                LastKnownPosition = Player.position;
-                _loseInterestAt = Time.time + loseInterestTime;
-            }
-            else if (hasLineOfSight && DistanceToPlayer <= suspect)
-            {
-                // 이미 추격 중이면 의심으로 내려오지 않는다
-                if (_playerState != AlertState.Alerted || Time.time >= _loseInterestAt)
-                    SetPlayerState(AlertState.Suspicious);
-            }
-            else if (_playerState == AlertState.Alerted && Time.time >= _loseInterestAt)
-            {
-                SetPlayerState(AlertState.Idle);
-            }
+            if (_playerState == AlertState.Alerted && Time.time >= _loseInterestAt)
+                SetPlayerState(Time.time < _investigateUntil ? AlertState.Suspicious : AlertState.Idle);
             else if (_playerState == AlertState.Suspicious && Time.time >= _investigateUntil)
-            {
                 SetPlayerState(AlertState.Idle);
-            }
+        }
+
+        private void SpotPlayer()
+        {
+            LastKnownPosition = Player.position;
+            _loseInterestAt = Time.time + loseInterestTime;
+            SetPlayerState(AlertState.Alerted);
+        }
+
+        /// <summary>그 지점이 바라보는 쪽 앞 반원(시야각) 안인가. 거리 · 벽은 따로 본다.</summary>
+        protected bool InFrontArc(Vector2 point)
+        {
+            Vector2 to = point - Position;
+            if (to.sqrMagnitude < 0.0001f) return true;
+            return Vector2.Angle(_facing, to) <= sightConeAngle * 0.5f;
         }
 
         /// <summary>
@@ -477,7 +510,8 @@ namespace Capstone.Enemy
                 }
             }
 
-            if (CanSeePlayer)
+            // 처음 알아차리는 건 앞쪽 시야각으로만 (등 뒤 기척은 발소리 - 의심 - 로 들어온다)
+            if (InSightCone() || (_playerState == AlertState.Alerted && CanSeePlayer))
             {
                 if (keepChasingOnceSeen) _hunting = true;
                 LastKnownPosition = Player.position;

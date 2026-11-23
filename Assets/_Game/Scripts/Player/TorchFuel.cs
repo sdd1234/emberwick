@@ -20,8 +20,8 @@ namespace Capstone.Player
         [SerializeField, Range(0f, 100f)] private float fuel = 100f;
 
         [Header("소모")]
-        [Tooltip("최대 레이드 시간(분). 기획서 6.5 - 20분을 넘지 않는다")]
-        [SerializeField] private float maxRaidMinutes = 20f;
+        [Tooltip("최대 레이드 시간(분). RaidManager.raidMinutes 와 맞춘다 (2026-11-04 5분 - 강한 불 4분, 약한 불 8분)")]
+        [SerializeField] private float maxRaidMinutes = 5f;
         [Tooltip("점등 가능 시간의 상한 비율. 기획서 6.5 - 레이드 시간의 80%")]
         [SerializeField, Range(0.1f, 1f)] private float burnTimeRatio = 0.8f;
         [Tooltip("화승총 1발당 소모량 (기획서 7.7 - 2%)")]
@@ -31,7 +31,7 @@ namespace Capstone.Player
         [Tooltip("약하게 켰을 때 닳는 속도 배율")]
         [SerializeField] private float weakDrain = 0.5f;
         [Tooltip("강하게 켰을 때 닳는 속도 배율")]
-        [SerializeField] private float strongDrain = 1.25f;
+        [SerializeField] private float strongDrain = 1f;
         [SerializeField] private LanternLevel litLevel = LanternLevel.Strong;
 
         public float Fuel => fuel;
@@ -79,6 +79,7 @@ namespace Capstone.Player
             if (level == LanternLevel.Off) { SetLit(false); return; }
             if (litLevel == level) return;
             litLevel = level;
+            if (IsLit) FX.SfxBank.Play2D("light_change");
             OnLevelChanged?.Invoke(Level);
         }
 
@@ -87,6 +88,7 @@ namespace Capstone.Player
             if (lit && IsEmpty) return;         // 불씨 없이는 켜지지 않는다
             if (IsLit == lit) return;
             IsLit = lit;
+            FX.SfxBank.Play2D(lit ? "light_on" : "light_off");
             OnLitChanged?.Invoke(IsLit);
             OnLevelChanged?.Invoke(Level);
         }

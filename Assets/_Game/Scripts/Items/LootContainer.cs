@@ -44,6 +44,11 @@ namespace Capstone.Items
             new() { grade = ItemGrade.Legendary, weight = 3f  },
         };
 
+        [Header("견본 상자 (수정사항 2026-11-10 - 마을 사운드 테스트용)")]
+        [Tooltip("물건을 꺼낼 수도 넣을 수도 없다. 닫으면 다시 채워져 감정 소리를 몇 번이고 들을 수 있다")]
+        [SerializeField] private bool displayOnly;
+        public bool DisplayOnly => displayOnly;
+
         [Header("표시")]
         [SerializeField] private string displayLabel = "상자";
         [SerializeField] private SpriteRenderer highlight;
@@ -52,6 +57,7 @@ namespace Capstone.Items
         public string DisplayLabel => displayLabel;
         public bool IsBeingSearched { get; private set; }
         public bool IsGenerated { get; private set; }
+        public bool IsCorpse { get; private set; }
         public float SearchTime => _searchTime;
         public float SearchProgress => Mathf.Clamp01(_searchTime / fullSearchTime);
         public bool HasRemaining => Grid != null && Grid.Items.Count > 0;
@@ -83,6 +89,7 @@ namespace Capstone.Items
         public void SetupAsCorpse(string label, IEnumerable<ItemDefinition> contents, float searchTime)
         {
             displayLabel = label;
+            IsCorpse = true;
             fullSearchTime = Mathf.Max(0.5f, searchTime);
             if (Grid == null) Grid = new ItemGrid(gridColumns, gridRows);
             Grid.Clear();
@@ -142,7 +149,27 @@ namespace Capstone.Items
             if (revealed) Grid.RaiseChanged();
         }
 
-        public void StopSearching() => IsBeingSearched = false;
+        public void StopSearching()
+        {
+            IsBeingSearched = false;
+            if (!displayOnly) return;
+            // 견본 상자 - 닫으면 처음 상태로. 다음에 열면 새로 뽑아 다시 감정한다
+            IsGenerated = false;
+            _searchTime = 0f;
+            Grid?.Clear();
+        }
+
+        /// <summary>마을 견본 상자로 만든다 (에디터 빌더가 부른다). 그 등급 물건만 나온다.</summary>
+        public void SetupDisplay(string label, ItemGrade grade, List<ItemDefinition> items, int count, float searchSeconds)
+        {
+            displayOnly = true;
+            requiresLight = false;
+            displayLabel = label;
+            pool = items;
+            gradeTable = new[] { new GradeRoll { grade = grade, weight = 1f } };
+            minItems = maxItems = Mathf.Max(1, count);
+            fullSearchTime = Mathf.Max(0.5f, searchSeconds);
+        }
 
         /// <summary>
         /// 물건 하나가 드러날 때 - 뒤적이는 먼지 몇 점만 (공포 쪽 연출 - 등급 빛가루는 파밍 게임 문법이라 뺐다, 등급은 가방 색으로 읽힌다).
@@ -154,7 +181,7 @@ namespace Capstone.Items
         }
 
         /// <summary>드래그로 가져갈 때 호출. 식별 안 된 물건은 못 가져간다.</summary>
-        public bool CanTake(GridItem item) => item != null && item.Identified;
+        public bool CanTake(GridItem item) => item != null && item.Identified && !displayOnly;
 
         // ---------- 생성 ----------
         private void Generate()

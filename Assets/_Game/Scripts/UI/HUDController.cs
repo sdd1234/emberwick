@@ -90,7 +90,7 @@ namespace Capstone.UI
             if (ailmentText != null)
             {
                 string line = "";
-                if (_ailments != null && _ailments.IsBleeding) line += "<color=#E0473F>출혈</color>  [H] 붕대   ";
+                if (_ailments != null && _ailments.IsBleeding) line += $"<color=#E0473F>출혈 {Mathf.CeilToInt(_ailments.BleedRemaining)}초</color>  [H] 붕대   ";
                 if (_ailments != null && _ailments.IsInfected) line += $"<color=#8FCB5A>감염 {_ailments.Infection:0}%</color>";
                 ailmentText.text = line;
             }

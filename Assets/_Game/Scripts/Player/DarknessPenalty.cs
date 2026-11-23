@@ -61,6 +61,7 @@ namespace Capstone.Player
             if (!health) health = GetComponent<Combat.Health>();
             if (!controller) controller = GetComponent<PlayerController>();
             FindVignette();
+            if (whisperSource) whisperSource.clip = FX.SfxBank.Find("witch_whips");
         }
 
         private void FindVignette()
@@ -122,7 +123,7 @@ namespace Capstone.Player
             if (!suspended && IsWhispering)
                 target = whisperMaxVolume * Mathf.Clamp01((DarkTime - whisperAfter) / Mathf.Max(0.1f, whisperRampSeconds) + 0.25f);
 
-            if (target > 0f && !whisperSource.isPlaying) { whisperSource.volume = 0f; whisperSource.Play(); }
+            if (target > 0f && !whisperSource.isPlaying) { whisperSource.volume = 0f; whisperSource.Play(); FX.SfxBank.Report("witch_whips", target); }
 
             float rate = target > whisperSource.volume ? 0.6f : whisperMaxVolume / Mathf.Max(0.05f, whisperFadeOut);
             whisperSource.volume = Mathf.MoveTowards(whisperSource.volume, target, rate * Time.deltaTime);

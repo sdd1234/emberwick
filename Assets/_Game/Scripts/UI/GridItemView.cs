@@ -35,6 +35,8 @@ namespace Capstone.UI
         private Camera _dragCamera;                 // 드래그를 시작한 캔버스의 카메라 (오버레이면 null)
 
         public GridItem Item => _item;
+        /// <summary>지금 커서가 올라가 있는 물건. 퀵슬롯 등록에 쓴다.</summary>
+        public static GridItem Hovered { get; private set; }
 
         public void Setup(GridPanelUI panel, GridItem item, Color unknownColor)
         {
@@ -93,6 +95,7 @@ namespace Capstone.UI
         {
             // 감정 전에는 집을 수 없다
             if (_item == null || !_item.Identified) return;
+            if (_panel.Container != null && _panel.Container.DisplayOnly) return;     // 견본 상자 - 보기만 한다
 
             int cx, cy;
             _dragCamera = e.pressEventCamera;
@@ -151,20 +154,47 @@ namespace Capstone.UI
         {
             if (ItemDrag.IsDragging) return;      // 끌고 다니는 중엔 설명창이 방해만 된다
             ItemTooltip.Show(_item);
+            _hovered = true;
+            Hovered = _item != null && _item.Identified ? _item : null;
         }
 
-        public void OnPointerExit(PointerEventData e) => ItemTooltip.Hide();
+        public void OnPointerExit(PointerEventData e)
+        {
+            ItemTooltip.Hide();
+            _hovered = false;
+            Hovered = null;
+        }
 
-        /// <summary>우클릭 - 쓸 수 있는 물건(붕대)이면 쓴다. 상자 · 시체 안의 물건은 먼저 가져와야 한다.</summary>
+        /// <summary>
+        /// 우클릭 - 쓸 수 있는 물건(붕대)이면 쓴다. 상자 · 시체 안의 물건은 먼저 가져와야 한다.
+        /// Alt+우클릭 · Alt+좌클릭 - 끌지 않고 반대쪽 격자로 바로 옮긴다 (수정사항 2026-11-10 - Alt+우클릭 추가).
+        /// </summary>
         public void OnPointerClick(PointerEventData e)
         {
-            if (e.button != PointerEventData.InputButton.Right || _item == null || ItemDrag.IsDragging) return;
+            if (_item == null || ItemDrag.IsDragging) return;
+            var kb = Keyboard.current;
+            bool alt = kb != null && kb.altKey.isPressed;
+            if (alt && (e.button == PointerEventData.InputButton.Left || e.button == PointerEventData.InputButton.Right)) { TryQuickMove(); return; }
+            if (e.button != PointerEventData.InputButton.Right) return;
             if (_panel.Container != null || !Items.ItemUse.IsUsable(_item.Def)) return;
             var pc = FindFirstObjectByType<Player.PlayerController>();
             if (pc == null || pc.GetComponent<Combat.PlayerAilments>() == null) return;     // 마을에서는 쓰지 않는다
             ItemTooltip.Hide();
             Items.ItemUse.TryUse(_item, _panel.Grid, pc.gameObject, out var msg);
             HUDController.Toast(msg);
+        }
+
+        /// <summary>Alt+클릭 - 끌지 않고 반대쪽 격자로 바로 옮긴다 (타르코프 방식). 같은 물건 더미가 있으면 먼저 겹친다.</summary>
+        private void TryQuickMove()
+        {
+            if (!_item.Identified) return;
+            var target = _panel.QuickTarget;
+            if (target == null || target.Grid == null) return;
+            if ((_panel.Container != null && _panel.Container.DisplayOnly) || (target.Container != null && target.Container.DisplayOnly))
+            { HUDController.Toast("견본 상자다 - 꺼내거나 넣을 수 없다"); return; }
+
+            if (target.Grid.QuickMoveFrom(_panel.Grid, _item)) FX.SfxBank.Play2D("button_press");
+            else HUDController.Toast(target.Grid.WouldExceedWeight(_item) ? "너무 무겁다" : "자리가 없다");
         }
 
         public void OnEndDrag(PointerEventData e)
@@ -184,7 +214,12 @@ namespace Capstone.UI
         private void OnDisable()
         {
             if (ItemDrag.Item == _item) EndDragVisual();
+            // 커서를 올린 채 화면이 닫히면 OnPointerExit 가 안 와서 설명창이 커서를 따라다닌다
+            if (_hovered) { ItemTooltip.Hide(); Hovered = null; }
+            _hovered = false;
         }
+
+        private bool _hovered;
 
         private static void EndDragVisual()
         {
@@ -214,6 +249,10 @@ namespace Capstone.UI
             bool sameGrid = ReferenceEquals(panel.Grid, ItemDrag.Source);
             bool ok = panel.Grid.CanPlace(_item, tx, ty, ItemDrag.Rotated, sameGrid ? _item : null)
                       && (sameGrid || !panel.Grid.WouldExceedWeight(_item));
+
+            // 같은 물건 위면 더미에 얹는다 - 초록으로 그 칸을 보여 준다
+            var under = panel.Grid.At(cx, cy);
+            if (ItemGrid.CanStack(_item, under)) { panel.ShowGhost(under.X, under.Y, under.W, under.H, true); return; }
 
             panel.ShowGhost(tx, ty, w, h, ok);
         }

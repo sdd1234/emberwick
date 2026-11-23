@@ -59,6 +59,8 @@ namespace Capstone.UI
         private GameObject _prompt;
         private readonly List<Image> _pips = new();
         private GameObject _chipBleed, _chipInfect, _chipHidden;
+        private TMP_Text _bleedText;
+        private TMP_Text _capFlask, _capBandage;
         private TMP_Text _infectText, _hiddenText;
         private RectTransform _chips;
         private float _hpShown = 1f, _stShown = 1f;
@@ -109,7 +111,7 @@ namespace Capstone.UI
             Place(_chips, new Vector2(bx, sy + Size2(art.staminaBar).y + 2), new Vector2(600, 58));
             var hl = _chips.gameObject.AddComponent<HorizontalLayoutGroup>();
             hl.spacing = 6; hl.childControlWidth = hl.childControlHeight = false; hl.childForceExpandWidth = hl.childForceExpandHeight = false;
-            _chipBleed = Chip("Bleed", art.iconBleed, "출혈", new Color(0.88f, 0.35f, 0.31f), out _);
+            _chipBleed = Chip("Bleed", art.iconBleed, "출혈", new Color(0.88f, 0.35f, 0.31f), out _bleedText);
             _chipInfect = Chip("Infect", art.iconInfect, "감염", new Color(0.56f, 0.80f, 0.35f), out _infectText);
             _chipHidden = Chip("Hidden", art.iconHidden, "은신", new Color(0.59f, 0.75f, 0.90f), out _hiddenText);
 
@@ -117,9 +119,11 @@ namespace Capstone.UI
             var tr = Panel("TopRight", _root, new Vector2(1, 1), new Vector2(-120, -14), new Vector2(200, 110));
             Vector2 pls = Size2(art.plaque);
             Img("Plaque", tr, art.plaque, new Vector2(0, 14), pls);
-            Text("TimerCaption", tr, new Vector2(0, 14 + pls.y * 0.5f - 26), new Vector2(pls.x, 20), 13, Dim, TextAlignmentOptions.Center, 0.2f).text = "남은 시간";
-            _timer = Text("Timer", tr, new Vector2(0, 14 + pls.y * 0.5f - 8), new Vector2(pls.x, 34), 26, Ivory, TextAlignmentOptions.Center);
-            _timer.characterSpacing = 6;
+            // 도트 글꼴은 크기 12 의 정수배 · 정수 좌표에서만 격자에 맞는다. 자간 8.333 = 글꼴 1픽셀 (크기 24 에서 2px)
+            float timerTop = Mathf.Round(14 + pls.y * 0.5f);
+            Text("TimerCaption", tr, new Vector2(0, timerTop - 26), new Vector2(pls.x, 20), 12, Dim, TextAlignmentOptions.Center, 0f).text = "남은 시간";
+            _timer = Text("Timer", tr, new Vector2(0, timerTop - 8), new Vector2(pls.x, 34), 24, Ivory, TextAlignmentOptions.Center);
+            _timer.characterSpacing = 8.333f;
 
             // 오른쪽 아래 - 빛 플라스크 · 석궁
             var br = Panel("BottomRight", _root, new Vector2(1, 0), new Vector2(-20, 20), new Vector2(300, 200));
@@ -153,12 +157,16 @@ namespace Capstone.UI
             for (int i = 0; i < hints.GetLength(0); i++)
             {
                 float y = i * 41;
-                Key(bl, hints[i, 0], new Vector2(0, y + 2), 0.5f);   // 정확히 반 - 글자가 12px 정수 크기로 떨어진다
+                var cap = Key(bl, hints[i, 0], new Vector2(0, y + 2), 0.5f);   // 정확히 반 - 글자가 12px 정수 크기로 떨어진다
+                if (hints[i, 0] == "G") _capFlask = cap;
+                if (hints[i, 0] == "H") _capBandage = cap;
                 Text("Hint" + i, bl, new Vector2(46, y + 4), new Vector2(260, 30), 16, Dim, TextAlignmentOptions.Left, 0.2f).text = hints[i, 1];
             }
 
             HideOld();
             PixelSizes();
+
+            gameObject.AddComponent<QuickBarUI>().Build(font);
         }
 
         /// <summary>
@@ -238,11 +246,14 @@ namespace Capstone.UI
             if (stamina) { _stShown = Mathf.Lerp(_stShown, stamina.Normalized, k); SetWidth(_stFill, staminaFillRect.width * _stShown); }
 
             _chipBleed.SetActive(ailments && ailments.IsBleeding);
+            if (_bleedText && ailments && ailments.IsBleeding) _bleedText.text = $"출혈 {Mathf.CeilToInt(ailments.BleedRemaining)}초";   // 2026-11-10 - 최대 5초
             _chipInfect.SetActive(ailments && ailments.IsInfected);
             if (ailments && ailments.IsInfected) _infectText.text = $"감염 {ailments.Infection:0}%";
             _chipHidden.SetActive(stealth && (stealth.IsStealthed || stealth.IsHidden));
             if (stealth) _hiddenText.text = stealth.IsHidden ? "숨음" : "은신";
 
+            if (_capFlask) _capFlask.text = Core.KeyBindings.Label(Core.GameAction.Flask);
+            if (_capBandage) _capBandage.text = Core.KeyBindings.Label(Core.GameAction.Bandage);
             if (raid) { float t = raid.TimeRemaining; _timer.text = $"{Mathf.FloorToInt(t / 60f):00}:{Mathf.FloorToInt(t % 60f):00}"; _timer.color = t < 120f ? new Color(1f, 0.5f, 0.42f) : Ivory; }
 
             if (torch && flask) _flaskCount.text = $"× {Mathf.FloorToInt(torch.Fuel / Mathf.Max(1f, flask.FuelCost))}";

@@ -110,17 +110,10 @@ namespace Capstone.EditorTools
                 Set(interactor, "radius", 1.6f * 1.5f);
                 Set(interactor, "breakOffDistance", 2.2f * 1.5f);
 
-                // 발소리
-                var src = root.GetComponent<AudioSource>();
-                if (src == null) src = root.AddComponent<AudioSource>();
-                src.playOnAwake = false;
-                src.spatialBlend = 0f;
+                // 발소리 - 소리 자체는 SfxBank 가 낸다
                 var steps = root.GetComponent<Footsteps>();
                 if (steps == null) steps = root.AddComponent<Footsteps>();
-                SetRef(steps, "source", src);
                 SetRef(steps, "ringPrefab", ring);
-                SetClips(steps, "walkClips", "step_walk_");
-                SetClips(steps, "runClips", "step_run_");
 
                 // 어둠 패널티 - 속삭임은 자식 오디오에서 따로 돈다 (발소리와 음량을 따로 만지기 위해)
                 var whisperT = root.transform.Find("Whisper");
@@ -131,7 +124,6 @@ namespace Capstone.EditorTools
                 }
                 var ws = whisperT.GetComponent<AudioSource>();
                 if (ws == null) ws = whisperT.gameObject.AddComponent<AudioSource>();
-                ws.clip = AssetDatabase.LoadAssetAtPath<AudioClip>(SoundBaker.Folder + "/witch_whisper.wav");
                 ws.loop = true;
                 ws.playOnAwake = false;
                 ws.spatialBlend = 0f;
@@ -163,8 +155,8 @@ namespace Capstone.EditorTools
                 SetEnum(ai, "senseMode", infected ? (int)SenseMode.Hearing : (int)SenseMode.Sight);
                 Set(ai, "noticeRadius", 3f);
                 // 기본 시야 원뿔 - 소리만으로는 감지가 너무 적었다 (피드백 2차). 불을 꺼도 정면이면 보인다
-                Set(ai, "sightConeRange", infected ? 7f : 10f);
-                Set(ai, "sightConeAngle", infected ? 100f : 110f);
+                Set(ai, "sightConeRange", Feedback1110Setup.EnemySightRange);   // 2026-11-10 - 모든 적 전방 180도
+                Set(ai, "sightConeAngle", Feedback1110Setup.EnemySightAngle);
                 // 감염체는 한 번 물면 안 놓는다 (피드백 3차)
                 SetBool(ai, "keepChasingOnceSeen", infected);
                 Set(ai, "giveUpDistance", 25f);
@@ -277,21 +269,6 @@ namespace Capstone.EditorTools
                 var hint = (RectTransform)loot.Find("Hint");
                 hint.anchoredPosition = new Vector2(0f, -505f);
                 hint.sizeDelta = new Vector2(1600f, 40f);
-
-                // 감정 소리
-                var sfx = root.GetComponent<AudioSource>();
-                if (sfx == null) sfx = root.AddComponent<AudioSource>();
-                sfx.playOnAwake = false;
-                sfx.spatialBlend = 0f;
-                SetRef(ui, "sfxSource", sfx);
-                var so = new SerializedObject(ui);
-                var clips = so.FindProperty("revealClips");
-                clips.arraySize = 4;
-                string[] names = { "reveal_common", "reveal_rare", "reveal_unique", "reveal_legendary" };
-                for (int i = 0; i < 4; i++)
-                    clips.GetArrayElementAtIndex(i).objectReferenceValue =
-                        AssetDatabase.LoadAssetAtPath<AudioClip>($"{SoundBaker.Folder}/{names[i]}.wav");
-                so.ApplyModifiedPropertiesWithoutUndo();
 
                 // 어둠 패널티의 가장자리 어둠 - 피격 비네트를 떠서 검게 칠한다. 피격 붉은빛이 그 위에 와야 한다
                 var dmg = root.transform.Find("DamageVignette");
@@ -489,15 +466,5 @@ namespace Capstone.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void SetClips(Object target, string field, string prefix)
-        {
-            var so = new SerializedObject(target);
-            var p = so.FindProperty(field);
-            p.arraySize = 4;
-            for (int i = 0; i < 4; i++)
-                p.GetArrayElementAtIndex(i).objectReferenceValue =
-                    AssetDatabase.LoadAssetAtPath<AudioClip>($"{SoundBaker.Folder}/{prefix}{i + 1}.wav");
-            so.ApplyModifiedPropertiesWithoutUndo();
-        }
     }
 }

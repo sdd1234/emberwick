@@ -46,6 +46,8 @@ namespace Capstone.UI
         /// <summary>상자/시체면 설정된다. 식별 안 된 물건은 못 꺼내게 막는 데 쓴다.</summary>
         public LootContainer Container { get; private set; }
         public float CellSize => cellSize;
+        /// <summary>Alt+좌클릭한 물건이 옮겨 갈 격자. 화면을 여는 쪽이 정해 준다.</summary>
+        public GridPanelUI QuickTarget { get; set; }
         public float CellGap => cellGap;
         public DragVisual DragVisualPrefab => dragVisualPrefab;
         public RectTransform ItemRoot => itemRoot;
@@ -215,6 +217,7 @@ namespace Capstone.UI
         public void OnDrop(PointerEventData eventData)
         {
             if (!ItemDrag.IsDragging || Grid == null) { HideGhost(); return; }
+            if (Container != null && Container.DisplayOnly) { HideGhost(); return; }   // 견본 상자에는 넣지 않는다
 
             var item = ItemDrag.Item;
             var source = ItemDrag.Source;
@@ -228,6 +231,9 @@ namespace Capstone.UI
 
             int w, h, gx, gy;
             ItemDrag.GrabbedCell(out w, out h, out gx, out gy);
+
+            // 같은 물건 위에 놓으면 더미에 얹는다
+            if (Grid.StackFrom(source, item, Grid.At(cx, cy))) { HideGhost(); return; }
 
             Grid.MoveFrom(source, item, cx - gx, cy - gy, ItemDrag.Rotated);
             HideGhost();

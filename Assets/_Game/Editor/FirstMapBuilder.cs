@@ -72,6 +72,7 @@ namespace Capstone.EditorTools
             Physics2D.SyncTransforms();
             Belts();
             Groves();
+            ShareShadows();
             Lamps();
             HideBushes();
             Scatter();
@@ -267,6 +268,7 @@ namespace Capstone.EditorTools
             var f = Spr("Floor", P(floor), r.center, -36, Color.white, root);
             Tile(f, r.size);
             Side(root, r, 'N', doors); Side(root, r, 'S', doors); Side(root, r, 'W', doors); Side(root, r, 'E', doors);
+            Share(root);
             return r;
         }
 
@@ -304,10 +306,12 @@ namespace Capstone.EditorTools
             Tile(top, rect.size);
             var tsr = top.GetComponent<SpriteRenderer>();
             tsr.spriteSortPoint = SpriteSortPoint.Center;
+            Unshadow(top);
             // 앞면 (남쪽으로 내려온 벽 높이 0.9m) - 위와 같은 돌을 어둡게
             var face = Spr("WallFace", P("tile_wall"), new Vector2(rect.center.x, rect.yMin + 0.45f), 0, new Color(0.8f, 0.76f, 0.72f), parent);   // 너무 어두우면 불빛이 닿아도 벽이 안 살아난다 (11-01, 0.55 → 0.8)
             Tile(face, new Vector2(rect.width, 0.9f));
             face.GetComponent<SpriteRenderer>().sortingOrder = -1;
+            Unshadow(face);
             tsr.sortingOrder = 0;
         }
 
@@ -326,13 +330,15 @@ namespace Capstone.EditorTools
         }
 
         private static readonly List<Rect> _houses = new();
+        private static readonly string[] HouseNames = { "House_A", "House_B", "House_C", "House_D" };
+        private static readonly Rect[] HouseRects = { Rect.MinMaxRect(9f, -22f, 21f, -12f), Rect.MinMaxRect(25f, -24f, 35f, -14f), Rect.MinMaxRect(41f, -20f, 51f, -11f), Rect.MinMaxRect(10f, 9f, 22f, 18f) };
         private static void Village()
         {
             _houses.Clear();
-            _houses.Add(Building("House_A", Rect.MinMaxRect(9f, -22f, 21f, -12f), "tile_wood", new Door('N', 15f)));
-            _houses.Add(Building("House_B", Rect.MinMaxRect(25f, -24f, 35f, -14f), "tile_wood", new Door('N', 30f)));
-            _houses.Add(Building("House_C", Rect.MinMaxRect(41f, -20f, 51f, -11f), "tile_wood", new Door('N', 46f)));
-            _houses.Add(Building("House_D", Rect.MinMaxRect(10f, 9f, 22f, 18f), "tile_wood", new Door('S', 16f)));
+            _houses.Add(Building("House_A", HouseRects[0], "tile_wood", new Door('N', 15f)));
+            _houses.Add(Building("House_B", HouseRects[1], "tile_wood", new Door('N', 30f)));
+            _houses.Add(Building("House_C", HouseRects[2], "tile_wood", new Door('N', 46f)));
+            _houses.Add(Building("House_D", HouseRects[3], "tile_wood", new Door('S', 16f)));
         }
 
         // ================= 집 안 가구 (2026-11-01) =================
@@ -354,44 +360,53 @@ namespace Capstone.EditorTools
 
         private static void Furnish()
         {
+            // 가구는 그 집 아래에 둔다 - 집 벽과 한 그림자 묶음이어야 벽에 붙은 벽난로 · 선반이 벽 그림자에 안 먹힌다 (11-02)
             var old = _map.Find("Furniture");
             if (old != null) Object.DestroyImmediate(old.gameObject);
-            var root = Group("Furniture", _map);
+            var bld = _map.Find("Buildings");
+            foreach (var n in HouseNames)
+            {
+                var h = bld != null ? bld.Find(n) : null;
+                var f = h != null ? h.Find("Furniture") : null;
+                if (f != null) Object.DestroyImmediate(f.gameObject);
+            }
+            // 남쪽 벽은 벽 머리가 0.9m 올라와 그려진다 - 남쪽 벽 쪽 가구는 바닥 = 벽 안쪽 + 1.35m 보다 위에 둬야 벽에 안 묻힌다 (11-02)
             // 집 A (9..21, -22..-12) 문 북쪽 15
-            Furn("furn_fireplace", 11.3f, -12.95f, root, true);
-            Furn("furn_shelf", 19.2f, -12.95f, root, true);
-            Furn("furn_table", 13.4f, -17.2f, root, true);
-            Furn("furn_chair", 11.9f, -17.3f, root, false);
-            Furn("furn_chair_fallen", 15.4f, -18.4f, root, false);
-            Furn("furn_bed", 17.0f, -21.55f, root, true);
-            Furn("furn_jars", 10.2f, -15.6f, root, false);
+            Furn("furn_fireplace", 11.3f, -12.95f, true);
+            Furn("furn_shelf", 19.2f, -12.95f, true);
+            Furn("furn_table", 13.4f, -17.2f, true);
+            Furn("furn_chair", 11.9f, -17.3f, false);
+            Furn("furn_chair_fallen", 15.4f, -18.9f, false);
+            Furn("furn_bed", 19.75f, -17.6f, true);
+            Furn("furn_jars", 10.2f, -15.6f, false);
             // 집 B (25..35, -24..-14) 문 북쪽 30
-            Furn("furn_shelf", 26.6f, -14.95f, root, true);
-            Furn("furn_fireplace", 33.3f, -14.95f, root, true);
-            Furn("furn_table", 29.4f, -19.6f, root, true);
-            Furn("furn_chair", 31.0f, -19.7f, root, false, true);
-            Furn("furn_bed", 26.6f, -23.55f, root, true);
-            Furn("furn_jars", 34.2f, -18.6f, root, false);
+            Furn("furn_shelf", 26.6f, -14.95f, true);
+            Furn("furn_fireplace", 33.3f, -14.95f, true);
+            Furn("furn_table", 29.4f, -19.6f, true);
+            Furn("furn_chair", 31.0f, -19.7f, false, true);
+            Furn("furn_bed", 26.15f, -22.4f, true);
+            Furn("furn_jars", 34.2f, -18.6f, false);
             // 집 C (41..51, -20..-11) 문 북쪽 46
-            Furn("furn_fireplace", 43.2f, -11.95f, root, true);
-            Furn("furn_shelf", 49.6f, -11.95f, root, true);
-            Furn("furn_table", 46.2f, -15.6f, root, true);
-            Furn("furn_chair_fallen", 48.0f, -16.6f, root, false, true);
-            Furn("furn_jars", 42.0f, -15.4f, root, false);
-            Furn("furn_bed", 46.0f, -19.55f, root, true);
+            Furn("furn_fireplace", 43.2f, -11.95f, true);
+            Furn("furn_shelf", 49.6f, -11.95f, true);
+            Furn("furn_table", 46.2f, -15.6f, true);
+            Furn("furn_chair_fallen", 47.9f, -17.6f, false, true);
+            Furn("furn_jars", 42.0f, -15.4f, false);
+            Furn("furn_bed", 49.85f, -16.3f, true);
             // 집 D (10..22, 9..18) 문 남쪽 16
-            Furn("furn_fireplace", 16.0f, 17.05f, root, true);
-            Furn("furn_shelf", 13.6f, 17.05f, root, true);
-            Furn("furn_table", 13.2f, 12.4f, root, true);
-            Furn("furn_chair", 11.6f, 12.3f, root, false);
-            Furn("furn_chair", 14.8f, 12.3f, root, false, true);
-            Furn("furn_bed", 20.6f, 9.45f, root, true);
-            Furn("furn_jars", 21.0f, 13.6f, root, false);
+            Furn("furn_fireplace", 16.0f, 17.05f, true);
+            Furn("furn_shelf", 13.6f, 17.05f, true);
+            Furn("furn_table", 13.2f, 12.4f, true);
+            Furn("furn_chair", 11.6f, 12.3f, false);
+            Furn("furn_chair", 14.8f, 12.3f, false, true);
+            Furn("furn_bed", 20.75f, 10.9f, true);
+            Furn("furn_jars", 21.0f, 14.4f, false);
         }
 
         /// <summary>가구 하나. 발밑 피벗 · Y 정렬. 큰 것(shadow)은 발치 상자만큼 막고 등불 그림자를 드리운다.</summary>
-        private static void Furn(string sprite, float x, float y, Transform parent, bool shadow, bool flip = false)
+        private static void Furn(string sprite, float x, float y, bool shadow, bool flip = false)
         {
+            var parent = FurnRoot(new Vector2(x, y));
             var s = P(sprite);
             if (s == null) { Debug.LogWarning("[FirstMapBuilder] 그림 없음 " + sprite); return; }
             var go = Spr(sprite, s, new Vector2(x, y), 0, Color.white, parent);
@@ -401,15 +416,65 @@ namespace Capstone.EditorTools
             var bc = go.AddComponent<BoxCollider2D>();
             bc.size = new Vector2(s.bounds.size.x * 0.85f, Mathf.Min(0.9f, s.bounds.size.y * 0.45f));
             bc.offset = new Vector2(0f, bc.size.y * 0.5f);
-            if (!shadow) return;
-            // 그림자 모양은 발치 상자 - 그림 실루엣 전체로 드리우면 가구 윗면까지 그림자에 먹힌다
-            var sc = new GameObject("Shadow");
-            sc.transform.SetParent(go.transform, false);
-            sc.transform.localPosition = new Vector3(0f, bc.size.y * 0.5f, 0f);
-            sc.transform.localScale = new Vector3(bc.size.x, bc.size.y, 1f);
-            var caster = sc.AddComponent<ShadowCaster2D>();
+            // 가구 그림자는 끈다 (11-02 피드백) - 좁은 방에서 등불 가까이 가구 발치 그림자가 방바닥을 크게 가르는 검은 쐐기로 뻗어
+            // 이상해 보였다. 벽 그림자만으로 방 안 그늘은 충분하다. 다시 켜려면 FurnitureShadows 를 true 로
+            if (!shadow || !FurnitureShadows) { Unshadow(go); return; }
+            // 그림자 모양은 발치 상자. 그림자 부품은 가구 그림 자체에 붙인다 - 자식에 따로 두면 가구 그림이 자기 발치 그림자에
+            // 덮여, 등불을 남쪽에서 비추면 벽난로 · 침대가 통째로 어두워졌다 (11-02). 같은 오브젝트면 URP 가 제 그림자를 걷어 낸다
+            var caster = go.AddComponent<ShadowCaster2D>();
             caster.castingOption = ShadowCaster2D.ShadowCastingOptions.CastShadow;
+            float hx = bc.size.x * 0.5f, h = bc.size.y;
+            SetShape(caster, new[] { new Vector3(-hx, 0f), new Vector3(hx, 0f), new Vector3(hx, h), new Vector3(-hx, h) });
         }
+
+        /// <summary>점이 든 집의 Furniture 묶음 (없으면 만든다)</summary>
+        private static Transform FurnRoot(Vector2 p)
+        {
+            var bld = Group("Buildings", _map, true);
+            for (int i = 0; i < HouseRects.Length; i++)
+                if (HouseRects[i].Contains(p)) return Group("Furniture", Group(HouseNames[i], bld, true), true);
+            return Group("Furniture", _map, true);
+        }
+
+        /// <summary>
+        /// 그림자를 드리우지 않고, 같은 묶음(CompositeShadowCaster2D) 그림자만 걷어 내는 부품 (11-02).
+        /// 벽 머리 · 앞면 그림은 충돌 상자와 다른 오브젝트라, 안에서 등불을 비추면 제 벽 그림자에 덮여 시커멓게 나왔다.
+        /// </summary>
+        private static void Unshadow(GameObject go)
+        {
+            var c = go.AddComponent<ShadowCaster2D>();
+            c.castingOption = ShadowCaster2D.ShadowCastingOptions.NoShadow;
+        }
+
+        /// <summary>그림자 모양을 직접 정한다 (ShapeEditor). 그림 실루엣 대신 발치만 막을 때.</summary>
+        private static void SetShape(ShadowCaster2D sc, Vector3[] pts)
+        {
+            var so = new SerializedObject(sc);
+            var src = so.FindProperty("m_ShadowCastingSource");
+            if (src != null) src.intValue = 1;                                  // ShapeEditor
+            var path = so.FindProperty("m_ShapePath");
+            path.arraySize = pts.Length;
+            for (int i = 0; i < pts.Length; i++) path.GetArrayElementAtIndex(i).vector3Value = pts[i];
+            so.FindProperty("m_ShapePathHash").intValue = Random.Range(int.MinValue, int.MaxValue);   // 그림자 메시를 다시 만들게
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// 나무 · 가구 그림자를 한 묶음으로 (11-02). 묶음 안의 그림은 묶음 그림자를 받지 않는다 -
+        /// 따로 두면 이웃 나무 밑동 그림자가 나무 꼭대기를 가로질러, 다가가고 멀어질 때마다 나무가 잘린 듯 어두워졌다.
+        /// 그림자는 바닥 · 사람에게만 드리운다. 벽 그림자는 다른 묶음이라 그대로 나무를 가린다.
+        /// </summary>
+        private static void Share(Transform root)
+        {
+            if (root != null && root.GetComponent<CompositeShadowCaster2D>() == null) root.gameObject.AddComponent<CompositeShadowCaster2D>();
+        }
+
+        private static void ShareShadows()
+        {
+            foreach (var n in new[] { "ZoneBelts", "Groves", "PlagueGraveyard", "Crossroads", "BanditCamp" }) Share(_map.Find(n));
+        }
+
+        private const bool FurnitureShadows = false;
 
         private static Vector2 CampCenter => new(38f, 28f);
         private static void Camp()
@@ -746,11 +811,11 @@ namespace Capstone.EditorTools
             Box("Armory", new Vector2(-52.5f, 9.6f), "Barracks_Armory");
             Box("Strongbox", new Vector2(-52.5f, -6.2f), "Barracks_Strongbox");
             // 마을
-            Box("Chest", new Vector2(10.6f, -20.8f), "HouseA_Chest");
-            Box("Sack", new Vector2(19.6f, -20.8f), "HouseA_Sack");
-            Box("Apothecary", new Vector2(33.6f, -22.6f), "HouseB_Apothecary");
-            Box("Chest", new Vector2(49.6f, -18.8f), "HouseC_Chest");
-            Box("Strongbox", new Vector2(42.4f, -18.8f), "HouseC_Strongbox");
+            Box("Chest", new Vector2(10.6f, -20.4f), "HouseA_Chest");
+            Box("Sack", new Vector2(19.6f, -20.4f), "HouseA_Sack");
+            Box("Apothecary", new Vector2(33.6f, -22.3f), "HouseB_Apothecary");
+            Box("Chest", new Vector2(49.6f, -18.45f), "HouseC_Chest");
+            Box("Strongbox", new Vector2(42.4f, -18.45f), "HouseC_Strongbox");
             Box("Sack", new Vector2(20.6f, 16.6f), "HouseD_Sack");
             Box("Chest", new Vector2(11.4f, 16.6f), "HouseD_Chest");
             // 야영지
@@ -963,7 +1028,7 @@ namespace Capstone.EditorTools
             var vig = prof.TryGet<Vignette>(out var v) ? v : prof.Add<Vignette>(true);
             vig.intensity.Override(0.4f); vig.smoothness.Override(0.5f); vig.color.Override(new Color(0.02f, 0.02f, 0.05f));
             var ca = prof.TryGet<ColorAdjustments>(out var c2) ? c2 : prof.Add<ColorAdjustments>(true);
-            ca.contrast.Override(24f); ca.saturation.Override(-6f); ca.postExposure.Override(0.15f); ca.colorFilter.Override(Color.white);
+            ca.contrast.Override(24f); ca.saturation.Override(-6f); ca.postExposure.Override(Feedback1110Setup.RaidExposure);   // 2026-11-10 밝기 +50% ca.colorFilter.Override(Color.white);
             // 그림자 - 어둠은 그늘에서 시작한다: 밝은 곳은 따뜻하게, 그늘은 차갑게
             var smh = prof.TryGet<ShadowsMidtonesHighlights>(out var sm) ? sm : prof.Add<ShadowsMidtonesHighlights>(true);
             smh.shadows.Override(new Vector4(0.85f, 0.92f, 1.15f, -0.05f)); smh.highlights.Override(new Vector4(1.1f, 1.02f, 0.9f, 0.05f));

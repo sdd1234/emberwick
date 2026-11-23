@@ -66,6 +66,7 @@ namespace Capstone.Town
         private void Show(bool on)
         {
             if (popup == null) return;
+            if (on && !popup.activeSelf) FX.SfxBank.Play2D("raid_popup");
             popup.SetActive(on);
             Cursor.visible = true;
         }

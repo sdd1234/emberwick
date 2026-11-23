@@ -49,6 +49,10 @@ namespace Capstone.Core
             }
         }
 
+        /// <summary>퀵슬롯에 등록된 물건 종류. 죽거나 판이 바뀌어도 그대로다.</summary>
+        public static readonly Items.ItemDefinition[] QuickSlots = new Items.ItemDefinition[KeyBindings.SlotCount];
+        public static bool QuickSlotsReady;
+
         public static int Gold { get; private set; }
 
         // ---------- 마지막 레이드 결과 (마을 머리말에 쓴다) ----------
@@ -120,6 +124,34 @@ namespace Capstone.Core
             Gold += gained;
             OnChanged?.Invoke();
             return gained;
+        }
+
+        /// <summary>가게에서 지금 살 수 있는 최대 수량. 소지금과 창고 자리 중 작은 쪽, 한 번에 99개까지.</summary>
+        public static int MaxBuyable(Items.ItemDefinition def, int price)
+        {
+            int byGold = price > 0 ? Gold / price : 99;
+            return Stash.FitCount(def, Mathf.Min(99, byGold));
+        }
+
+        /// <summary>
+        /// 가게에서 여러 개 산다. 같은 물건 더미에 먼저 얹고, 한 칸에 maxStack 까지만 쌓는다.
+        /// 산 개수만큼만 돈을 뺀다 - 먼저 MaxBuyable 로 수량을 정해 부른다.
+        /// </summary>
+        public static int Buy(Items.ItemDefinition def, int price, int count)
+        {
+            if (def == null || price < 0 || count <= 0 || Gold < price * count) return 0;
+
+            int perSlot = def.stackable ? Mathf.Max(1, def.maxStack) : 1;
+            int bought = 0;
+            while (bought < count)
+            {
+                int put = Mathf.Min(count - bought, perSlot);
+                if (!Stash.TryAutoPlace(new Items.GridItem { Def = def, Count = put, Identified = true })) break;
+                bought += put;
+            }
+            Gold -= price * bought;
+            OnChanged?.Invoke();
+            return bought;
         }
 
         /// <summary>

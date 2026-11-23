@@ -116,6 +116,15 @@ namespace Capstone.Player
             proximityLight.pointLightInnerRadius = proximityLight.pointLightOuterRadius * core;
         }
 
+        /// <summary>등불(몸 둘레 원)이 지금 비추는 반경 (m). 불을 끄면 근접 시야 반경.</summary>
+        public float LanternRadius => useCone ? (torch != null && torch.IsLit ? _currentRange : ProximityRadius) : _currentRadius;
+        /// <summary>
+        /// 적이 회색 실루엣으로 보이는 플레이어 시야각 (수정사항 2026-11-10).
+        /// 마우스 쪽 부채꼴 - 반각(도)과 길이(m). 정조준하면 좁아진다.
+        /// </summary>
+        public float ViewHalfAngle => (player != null && player.IsAiming ? FovAiming : FovNormal) * 0.5f;
+        public float ViewRange => ConeRangeLit;
+
         public float CurrentHalfAngle => _currentFov * 0.5f;
         public float CurrentConeRange => _currentRange;
         public Vector2 ConeDirection => player ? player.AimDirection : Vector2.right;

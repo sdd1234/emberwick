@@ -15,7 +15,9 @@ namespace Capstone.EditorTools
         private const string KeyRuns = "Capstone.Playtest.Runs";
         private const string KeyScale = "Capstone.Playtest.TimeScale";
         private const string KeyScene = "Capstone.Playtest.RaidScene";
+        private const string KeyShowcase = "Capstone.Playtest.Showcase";
         private const string TownPath = "Assets/_Game/Scenes/Town.unity";
+        private const string IntroPath = "Assets/_Game/Scenes/Intro.unity";
 
         static PlaytestMenu() => EditorApplication.playModeStateChanged += OnPlayMode;
 
@@ -24,6 +26,22 @@ namespace Capstone.EditorTools
 
         [MenuItem("Capstone/플레이테스트/봇 3판 (2배속)")]
         private static void RunThree() => Run(3, 2f);
+
+        [MenuItem("Capstone/플레이테스트/소리 검증 촬영 - 탈출까지")]
+        private static void FilmExtract() => Film(1);
+
+        [MenuItem("Capstone/플레이테스트/소리 검증 촬영 - 사망까지")]
+        private static void FilmDeath() => Film(2);
+
+        /// <summary>타이틀부터 봇이 한 판을 돌고, 게임 화면과 실제 소리를 Captures/sound_날짜시각 에 남긴다.</summary>
+        private static void Film(int kind)
+        {
+            if (EditorApplication.isPlaying) return;
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            EditorSceneManager.OpenScene(IntroPath);
+            SessionState.SetInt(KeyShowcase, kind);
+            EditorApplication.isPlaying = true;
+        }
 
         public static void Run(int runs, float timeScale, string raidScene = "Raid_Map1")
         {
@@ -39,6 +57,18 @@ namespace Capstone.EditorTools
         private static void OnPlayMode(PlayModeStateChange change)
         {
             if (change != PlayModeStateChange.EnteredPlayMode) return;
+            int film = SessionState.GetInt(KeyShowcase, 0);
+            if (film > 0)
+            {
+                SessionState.EraseInt(KeyShowcase);
+                Application.runInBackground = true;
+                EditorUtility.audioMasterMute = false;
+                string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "Captures", "sound_" + System.DateTime.Now.ToString("HHmmss") + (film == 2 ? "_death" : "_extract"));
+                Dev.GameplayRecorder.Begin(dir);
+                new GameObject("PlaytestBot").AddComponent<Dev.PlaytestBot>().ConfigureShowcase(film == 2);
+                Debug.Log("[Playtest] 촬영 시작 - " + dir);
+                return;
+            }
             int runs = SessionState.GetInt(KeyRuns, 0);
             if (runs <= 0) return;
             SessionState.EraseInt(KeyRuns);

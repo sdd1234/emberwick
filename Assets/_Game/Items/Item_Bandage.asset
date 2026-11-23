@@ -23,6 +23,6 @@ MonoBehaviour:
   value: 12
   weight: 0.2
   stackable: 1
-  maxStack: 5
+  maxStack: 3
   healAmount: 15
   stopsBleeding: 1

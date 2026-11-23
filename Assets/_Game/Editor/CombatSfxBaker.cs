@@ -6,7 +6,7 @@ namespace Capstone.EditorTools
 {
     /// <summary>
     /// 전투 · 빛 효과음을 코드로 합성한다 (메뉴 Capstone/사운드 굽기/전투 · 빛, 2026-10-29).
-    /// 사운드 에셋을 사기 전까지의 자체 소리 - SoundBaker 와 같은 원칙으로 다시 구우면 같은 소리가 나온다.
+    /// 팀 사운드(Resources/Sounds)에 아직 없는 소리만 남겼다 (2026-11-03) - 다시 구우면 같은 소리가 나온다.
     /// 소리마다 "무슨 재료로 만든 소리인가"를 주석으로 남긴다.
     /// </summary>
     public static class CombatSfxBaker
@@ -17,8 +17,7 @@ namespace Capstone.EditorTools
 
         public static readonly string[] Names =
         {
-            "bow_shoot", "hit_flesh", "hit_resist", "hit_weak", "bolt_stick", "dagger", "slam", "enemy_shot",
-            "flask_light", "flask_fire", "lamp_harvest", "lamp_place", "alert", "suspect", "dodge", "bush", "death",
+            "hit_flesh", "hit_resist", "hit_weak", "dagger", "slam", "enemy_shot", "lamp_harvest", "lamp_place", "suspect", "death",
         };
 
         [MenuItem("Capstone/사운드 굽기/전투 · 빛")]
@@ -26,38 +25,24 @@ namespace Capstone.EditorTools
         {
             Directory.CreateDirectory(Folder);
             _rng = new System.Random(291029);
-            // 석궁 - 시위가 튕기는 낮은 현 소리 + 짧은 바람
-            Write("bow_shoot", 0.32f, (t, i) => Pluck(t, 110f, 9f) * 0.8f + Noise() * Env(t, 0.002f, 0.08f) * 0.35f);
             // 살에 박힘 - 둔탁한 저음 펀치 + 젖은 잡음
             Write("hit_flesh", 0.22f, (t, i) => Sine(t, Mathf.Lerp(140f, 60f, t / 0.12f)) * Env(t, 0.001f, 0.1f) + Noise() * Env(t, 0.001f, 0.05f) * 0.5f, lowpass: 2200f);
             // 막힘(감염자 물리) - 쇠 긁힘 같은 높은 배음 여러 개가 짧게 울린다
             Write("hit_resist", 0.35f, (t, i) => (Sine(t, 1240f) + Sine(t, 1873f) * 0.6f + Sine(t, 2710f) * 0.4f) * Env(t, 0.001f, 0.18f) * 0.5f + Noise() * Env(t, 0.001f, 0.02f) * 0.4f);
             // 약점(빛 · 불) - 지글거리며 타는 소리 + 반짝 위로 오르는 음
             Write("hit_weak", 0.45f, (t, i) => Noise() * Env(t, 0.005f, 0.3f) * 0.45f + Sine(t, Mathf.Lerp(600f, 1400f, t / 0.3f)) * Env(t, 0.01f, 0.25f) * 0.4f, highpass: 300f);
-            // 벽에 박힘 - 나무에 꽂히는 짧은 '탁'
-            Write("bolt_stick", 0.15f, (t, i) => Sine(t, 420f) * Env(t, 0.0005f, 0.04f) + Noise() * Env(t, 0.0005f, 0.015f) * 0.6f);
             // 단도 - 빠른 휙 (대역 잡음이 높은 쪽으로 쓸려 간다)
             Write("dagger", 0.16f, (t, i) => Noise() * Env(t, 0.01f, 0.1f), band: t => Mathf.Lerp(1500f, 5000f, t / 0.16f));
             // 감염자 내려치기 - 무거운 쿵 + 땅 울림
             Write("slam", 0.6f, (t, i) => Sine(t, Mathf.Lerp(90f, 38f, t / 0.3f)) * Env(t, 0.002f, 0.4f) * 1.2f + Noise() * Env(t, 0.001f, 0.12f) * 0.6f, lowpass: 900f, reverb: 0.25f);
             // 이교도 석궁 - 우리 석궁보다 가볍고 높다
             Write("enemy_shot", 0.25f, (t, i) => Pluck(t, 180f, 14f) * 0.7f + Noise() * Env(t, 0.002f, 0.05f) * 0.3f);
-            // 빛 플라스크 - 유리 깨짐(높은 짤랑 여러 개) + 빛이 퍼지는 화음
-            Write("flask_light", 1.4f, (t, i) => Glass(t) + Chord(t, new[] { 523.25f, 659.25f, 783.99f, 1046.5f }, 0.05f, 1.1f) * 0.35f, reverb: 0.4f);
-            // 화염병 - 유리 깨짐 + 확 붙는 불(저역 잡음이 부풀었다 잦아든다)
-            Write("flask_fire", 1.2f, (t, i) => Glass(t) * 0.8f + Noise() * Env(t, 0.06f, 1f) * 0.6f, lowpass: 1800f, reverb: 0.2f);
             // 빛 거두기 - 위로 오르는 맑은 음 셋 (거둬 온다)
             Write("lamp_harvest", 1.1f, (t, i) => Arp(t, new[] { 523.25f, 659.25f, 987.77f }, 0.12f), reverb: 0.45f);
             // 빛 걸기 - 내려가는 음 셋 (내어 준다)
             Write("lamp_place", 1.1f, (t, i) => Arp(t, new[] { 987.77f, 783.99f, 523.25f }, 0.12f), reverb: 0.45f);
-            // 발각 - 짧고 날카로운 경고음 두 번
-            Write("alert", 0.35f, (t, i) => Square(t, t < 0.12f ? 880f : 1320f) * (Env(t, 0.002f, 0.1f) + Env(t - 0.14f, 0.002f, 0.14f)) * 0.3f, lowpass: 4000f);
             // 의심 - 낮게 갸웃하는 음 (올라가다 멈춘다)
             Write("suspect", 0.3f, (t, i) => Triangle(t, Mathf.Lerp(330f, 440f, Mathf.Clamp01(t / 0.15f))) * Env(t, 0.01f, 0.25f) * 0.4f);
-            // 구르기 - 천 스치는 휙
-            Write("dodge", 0.25f, (t, i) => Noise() * Env(t, 0.03f, 0.2f) * 0.7f, band: t => Mathf.Lerp(700f, 2200f, t / 0.25f));
-            // 덤불 - 잎이 바스락 (잡음을 잘게 끊는다)
-            Write("bush", 0.45f, (t, i) => Noise() * Env(t, 0.02f, 0.4f) * (Mathf.PerlinNoise(t * 60f, 0.3f) > 0.45f ? 1f : 0.25f) * 0.7f, band: t => 3200f);
             // 쓰러짐 - 둔탁한 털썩
             Write("death", 0.5f, (t, i) => Sine(t, Mathf.Lerp(110f, 45f, t / 0.25f)) * Env(t, 0.005f, 0.3f) + Noise() * Env(t, 0.002f, 0.15f) * 0.4f, lowpass: 1200f, reverb: 0.15f);
             AssetDatabase.Refresh();

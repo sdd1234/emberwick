@@ -39,6 +39,11 @@ namespace Capstone.Enemy
         [Tooltip("원거리 - 쏜 뒤 장전 자세를 보여주는 시간 (초)")]
         [SerializeField] private float reloadPoseSeconds = 0.9f;
 
+        /// <summary>지금 그림이 바라보는 방향 (횃불 · 등불이 이쪽에 선다).</summary>
+        public Vector2 Face { get; private set; } = Vector2.down;
+        /// <summary>그림이 오른쪽을 보고 있는가.</summary>
+        public bool LooksRight => _lastFace.x > 0f;
+
         private EnemyAI _ai;
         private MeleeEnemy _melee;
         private RangedEnemy _ranged;
@@ -81,6 +86,7 @@ namespace Capstone.Enemy
             if (_ranged != null && _ranged.AimProgress >= 0f) face = _ranged.AimTarget - (Vector2)transform.position;
             if (_rogue != null && _rogue.WindupProgress >= 0f) face = _rogue.AttackFacing;
             if (Mathf.Abs(face.x) > 0.05f) _lastFace = face;
+            if (face.sqrMagnitude > 0.0001f) Face = face.normalized;
             bool lookRight = _lastFace.x > 0f;
             target.flipX = artFacesLeft ? lookRight : !lookRight;
         }

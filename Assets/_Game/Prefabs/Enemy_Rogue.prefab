@@ -320,8 +320,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.RogueEnemy
   senseMode: 0
   noticeRadius: 3
-  sightConeRange: 9
-  sightConeAngle: 120
+  sightConeRange: 4
+  sightConeAngle: 180
   canHear: 1
   hearingMultiplier: 1
   keepChasingOnceSeen: 0
@@ -330,6 +330,7 @@ MonoBehaviour:
   detectRange: 15
   unlitRangeMultiplier: 0.25
   litAlertRadius: 0
+  weakLightRangeMultiplier: 0.55
   sightBlockMask:
     serializedVersion: 2
     m_Bits: 1024
@@ -364,6 +365,11 @@ MonoBehaviour:
   dodgeDistance: 2.4
   dodgeTime: 0.22
   dodgeCooldown: 1.1
+  waistLantern: 1
+  lanternColor: {r: 1, g: 0.66, b: 0.34, a: 1}
+  lanternRadius: 3.6
+  lanternIntensity: 1.05
+  lanternHip: {x: 0.2, y: 0.52}
 --- !u!1 &424377146245694875
 GameObject:
   m_ObjectHideFlags: 0

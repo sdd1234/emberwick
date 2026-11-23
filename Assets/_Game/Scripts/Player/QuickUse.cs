@@ -10,8 +10,9 @@ namespace Capstone.Player
     public class QuickUse : MonoBehaviour
     {
         [SerializeField] private Items.ItemDefinition bandage;
-        [SerializeField] private Key key = Key.H;
         [SerializeField] private Items.PlayerInventory inventory;
+
+        public Items.ItemDefinition Bandage => bandage;
 
         private void Awake()
         {
@@ -20,8 +21,7 @@ namespace Capstone.Player
 
         private void Update()
         {
-            var kb = Keyboard.current;
-            if (kb == null || bandage == null || !kb[key].wasPressedThisFrame) return;
+            if (bandage == null || !Core.KeyBindings.Pressed(Core.GameAction.Bandage) || UI.KeyBindPanel.BlocksInput) return;
             var pc = GetComponent<PlayerController>();
             if (pc != null && !pc.enabled) return;
 

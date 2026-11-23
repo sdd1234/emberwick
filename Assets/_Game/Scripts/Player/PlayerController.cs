@@ -16,6 +16,8 @@ namespace Capstone.Player
         [SerializeField] private float sprintSpeed = 5.6f;
         [Tooltip("입력 방향이 바뀔 때 얼마나 빨리 따라붙는지. 값이 클수록 즉각적")]
         [SerializeField] private float acceleration = 40f;
+        [Tooltip("우클릭 정조준 중 이동속도 배율 (수정사항 2026-11-10). 정조준 중엔 달릴 수 없다")]
+        [SerializeField, Range(0.1f, 1f)] private float aimSpeedMultiplier = 0.55f;
 
         [Header("구르기 (기획서 8.1 - Space)")]
         [SerializeField] private float rollSpeed = 9f;
@@ -40,6 +42,7 @@ namespace Capstone.Player
         public bool IsAiming { get; private set; }
         public bool IsRolling { get; private set; }
         public bool IsMoving => MoveInput.sqrMagnitude > 0.01f;
+        public float AimSpeedMultiplier => aimSpeedMultiplier;
 
         private Rigidbody2D _rb;
         private Combat.PlayerAilments _ailments;
@@ -68,8 +71,8 @@ namespace Capstone.Player
         private void Update()
         {
             ReadAim();
+            IsAiming = Mouse.current != null && Mouse.current.rightButton.isPressed && !UI.LootScreenUI.AnyScreenOpen;
             ReadMove();
-            IsAiming = Mouse.current != null && Mouse.current.rightButton.isPressed;
             HandleRollInput();
             FaceAim();
         }
@@ -83,7 +86,10 @@ namespace Capstone.Player
             }
 
             float target = IsSprinting ? sprintSpeed : walkSpeed;
-            target *= Mathf.Clamp01(ExternalSpeedMultiplier);
+            // 정조준 감속과 석궁 차징 감속은 곱하지 않고 더 느린 쪽 하나만 건다 - 겹치면 거의 못 움직인다
+            float slow = Mathf.Clamp01(ExternalSpeedMultiplier);
+            if (IsAiming) slow = Mathf.Min(slow, aimSpeedMultiplier);
+            target *= slow;
             if (_ailments != null) target *= _ailments.MoveSpeedMultiplier;      // 감염이 쌓일수록 무거워진다
 
             Vector2 desired = MoveInput * target;
@@ -103,7 +109,7 @@ namespace Capstone.Player
             if (kb.aKey.isPressed) raw.x -= 1f;
             MoveInput = raw.sqrMagnitude > 1f ? raw.normalized : raw;
 
-            bool wantsSprint = kb.leftShiftKey.isPressed && IsMoving && !IsRolling;
+            bool wantsSprint = kb.leftShiftKey.isPressed && IsMoving && !IsRolling && !IsAiming;
             IsSprinting = wantsSprint && stamina != null && stamina.DrainSprint(Time.deltaTime);
         }
 
@@ -143,7 +149,7 @@ namespace Capstone.Player
             // 입력이 없으면 조준 방향으로 구른다
             _rollDirection = IsMoving ? MoveInput : AimDirection;
             IsRolling = true;
-            FX.SfxBank.Play("dodge", transform.position, 0.6f);
+            FX.SfxBank.Play2D("dodge_roll", 0.9f, 0.04f);
             FX.Vfx.Play("vfx_dust", (Vector2)transform.position + Vector2.up * 0.25f, _rollDirection.x > 0f, 20);
             _rollEndTime = Time.time + rollDuration;
             _rollReadyTime = _rollEndTime + rollCooldown;

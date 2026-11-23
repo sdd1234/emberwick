@@ -90,12 +90,39 @@ namespace Capstone.Enemy
             Core.LightSignal.OnFlash -= HandleFlash;
         }
 
+        [Header("허리 등불 (수정사항 2026-11-10)")]
+        [Tooltip("허리춤에 매단 작은 등불. 이교도 횃불보다 작고 어둡다. 시선 방향 쪽으로 옮겨 다닌다")]
+        [SerializeField] private bool waistLantern = true;
+        [SerializeField] private Color lanternColor = new(1f, 0.66f, 0.34f);
+        [SerializeField] private float lanternRadius = 3.6f;
+        [SerializeField] private float lanternIntensity = 1.05f;
+        [Tooltip("오른쪽을 볼 때 등불을 매단 허리 위치 (로컬, 루트 2배 스케일 전). 등불은 여기에 매달려 아래로 늘어진다")]
+        [SerializeField] private Vector2 lanternHip = new(0.2f, 0.52f);
+
         protected override void Start()
         {
             base.Start();
+            if (waistLantern && GetComponentInChildren<EnemyTorch>(true) == null) AttachLantern();
             if (Home == Vector2.zero) Home = transform.position;
             _patrolGoal = Home;
             _hitsLeft = comboHits;
+        }
+
+        /// <summary>
+        /// 허리 등불을 단다. 그림 없이 빛만 - 등불 그림(노란 점 · 도트 등불)은 몸에 붙은 얼룩처럼 보였다 (2026-11-11 피드백).
+        /// 빛 자리는 시선 방향(상하좌우)을 따라 옮겨 간다 (EnemyTorch). 다른 도적을 불러들이지 않는다 (자기편 불빛).
+        /// </summary>
+        private void AttachLantern()
+        {
+            var body = GetComponent<SpriteRenderer>();
+            var go = new GameObject("WaistLantern");
+            go.transform.SetParent(transform, false);
+            var l = FX.LightUtil.AddPoint(go, lanternColor, lanternIntensity, lanternRadius);
+            l.pointLightInnerRadius = lanternRadius * 0.15f;
+            l.falloffIntensity = 0.65f;
+            l.shadowsEnabled = false;
+            var t = go.AddComponent<EnemyTorch>();
+            t.Configure(l, body, lanternHip, lanternIntensity, 0.1f, false, 0f);
         }
 
         // ---------- 빛 ----------
@@ -115,13 +142,14 @@ namespace Capstone.Enemy
             if (PlayerTorch != null && PlayerTorch.IsLit)
             {
                 float range = lightNoticeRange * (PlayerTorch.Level == Capstone.Player.LanternLevel.Weak ? 0.55f : 1f);
-                if (DistanceToPlayer <= range && HasLineOfSightTo(Player.position)) { Investigate(Player.position, 7f); return; }
+                // 수정사항 2026-11-10 - 등 뒤의 불빛은 못 본다. 앞쪽 시야각 안일 때만 보러 간다
+                if (DistanceToPlayer <= range && InFrontArc(Player.position) && HasLineOfSightTo(Player.position)) { Investigate(Player.position, 7f); return; }
             }
             var torches = EnemyTorch.All;
             for (int i = 0; i < torches.Count; i++)
             {
                 var t = torches[i];
-                if (t == null || !t.DrawsRogues) continue;
+                if (t == null || !t.DrawsRogues || !InFrontArc(t.Position)) continue;
                 if (Vector2.Distance(Position, t.Position) <= lightNoticeRange && HasLineOfSightTo(t.Position))
                 { Investigate(t.Position, 8f); return; }
             }
@@ -154,7 +182,7 @@ namespace Capstone.Enemy
 
             bool fromPlayer = owner != null && Player != null && owner.transform == Player;
             if (fromPlayer) RogueLearning.SawBolt();
-            float chance = fromPlayer ? RogueLearning.DodgeChance : RogueLearning.DodgeChance * 0.8f + 0.1f;
+            float chance = fromPlayer ? RogueLearning.DodgeChance : Mathf.Min(RogueLearning.MaxDodge, RogueLearning.DodgeChance * 0.8f + 0.1f);
             if (Random.value > chance) return false;
 
             Vector2 side = Vector2.Perpendicular(dir);
@@ -164,7 +192,7 @@ namespace Capstone.Enemy
             _dodgeDir = side;
             _dodgeUntil = Time.time + dodgeTime;
             _nextDodgeAt = Time.time + dodgeCooldown;
-            FX.SfxBank.Play("dodge", Position, 0.8f);
+            FX.SfxBank.Play("dodge_roll", Position, 0.8f);
             FX.Vfx.Play("vfx_dust", Position + Vector2.up * 0.25f, _dodgeDir.x > 0f, 20);
             _swingAt = -1f;
             FX.PixelFX.Burst(Position + Vector2.up * 0.2f, -side, new Color(0.45f, 0.4f, 0.35f), new Color(0.6f, 0.55f, 0.45f), 6, 2.5f, 40f, true, 0.35f);
@@ -342,8 +370,10 @@ namespace Capstone.Enemy
     public static class RogueLearning
     {
         public static int BoltsSeen { get; private set; }
-        /// <summary>볼트 하나마다 3%p, 최대 60%.</summary>
-        public static float DodgeChance => Mathf.Min(0.6f, BoltsSeen * 0.03f);
+        /// <summary>회피율 상한 (수정사항 2026-11-10 - 60% 에서 40% 로).</summary>
+        public const float MaxDodge = 0.4f;
+        /// <summary>볼트 하나마다 3%p, 최대 40%.</summary>
+        public static float DodgeChance => Mathf.Min(MaxDodge, BoltsSeen * 0.03f);
 
         private static int _lastToastStep;
 

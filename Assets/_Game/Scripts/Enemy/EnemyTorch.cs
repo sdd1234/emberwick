@@ -45,13 +45,66 @@ namespace Capstone.Enemy
         private void OnEnable() => _all.Add(this);
         private void OnDisable() => _all.Remove(this);
 
+        /// <summary>도적 허리 등불처럼 코드로 붙일 때 쓴다.</summary>
+        public void Configure(Light2D light, SpriteRenderer body, Vector2 right, float intensity, float flickerAmount, bool attractsRogues, float embers)
+        {
+            torchLight = light; holder = body; handRight = right; baseIntensity = intensity;
+            flicker = flickerAmount; drawsRogues = attractsRogues; embersPerSecond = embers;
+            if (holder) _anim = holder.GetComponentInParent<EnemySpriteAnimator>();
+        }
+
+        [Tooltip("위 · 아래를 볼 때 몸 가운데에서 앞뒤로 내미는 거리 (로컬)")]
+        [SerializeField] private float frontBackReach = 0.12f;
+        [Tooltip("그림 없는 불빛일 때 시선 방향으로 빛을 내미는 거리 (로컬, 부모 스케일 전)")]
+        [SerializeField] private float lightReach = 0.45f;
+        private Vector2 _lightOffset;
+        private EnemySpriteAnimator _anim;
+        private int _baseOrder;
+
+        private void Start()
+        {
+            if (holder) _anim = holder.GetComponentInParent<EnemySpriteAnimator>();
+            if (_sr) _baseOrder = _sr.sortingOrder;
+        }
+
         private void LateUpdate()
         {
             if (holder != null)                                   // 손에 든 횃불만 손을 따라간다 (모닥불은 제자리)
             {
-                bool flip = holder.flipX;                         // 원화는 오른쪽을 본다 - 뒤집히면 왼쪽
-                transform.localPosition = new Vector3(flip ? -handRight.x : handRight.x, handRight.y, 0f);
-                if (_sr) _sr.flipX = flip;
+                // 수정사항 2026-11-10 - 불빛이 시선 방향(상하좌우)을 알려 준다. 오른쪽을 보면 오른쪽, 위를 보면 몸 위(뒤), 아래를 보면 몸 앞
+                Vector2 face = _anim != null ? _anim.Face : (holder.flipX ? Vector2.left : Vector2.right);
+                Vector3 local = Vector3.zero;
+                int order = _baseOrder;
+                if (_sr == null)
+                {
+                    // 그림 없는 불빛 (도적 허리 등불) - 빛 웅덩이가 시선 쪽 앞에 깔려야 어디를 보는지 읽힌다
+                    Vector2 d4 = Mathf.Abs(face.y) > Mathf.Abs(face.x) * 1.2f ? new Vector2(0f, Mathf.Sign(face.y)) : new Vector2(Mathf.Sign(face.x), 0f);
+                    _lightOffset = Vector2.Lerp(_lightOffset, d4 * lightReach, 1f - Mathf.Exp(-10f * Time.deltaTime));   // 돌아설 때 툭 튀지 않게
+                    transform.localPosition = new Vector3(_lightOffset.x, handRight.y + _lightOffset.y, 0f);
+                }
+                else if (Mathf.Abs(face.y) > Mathf.Abs(face.x) * 1.2f)
+                {
+                    bool up = face.y > 0f;
+                    // 원화는 옆모습뿐이라 몸 한가운데에 두면 위를 볼 땐 몸에 통째로 가려 사라지고, 아래를 볼 땐 가랑이에 매달린다.
+                    // 그림이 보는 쪽 허리 가까이에 두고 - 위를 보면 몸 뒤에서 반쯤 보이고, 아래를 보면 허리띠 앞에 온다
+                    float side = (_anim != null ? _anim.LooksRight : !holder.flipX) ? 1f : -1f;
+                    local = up
+                        ? new Vector3(side * handRight.x * 1.45f, handRight.y + frontBackReach, 0f)
+                        : new Vector3(side * handRight.x * 0.35f, handRight.y, 0f);
+                    if (up) order = _baseOrder - 2;               // 위를 보면 불은 몸 뒤로 넘어간다
+                    if (_sr) _sr.flipX = side < 0f;
+                }
+                else
+                {
+                    bool right = _anim != null ? face.x > 0f : !holder.flipX;
+                    local = new Vector3(right ? handRight.x : -handRight.x, handRight.y, 0f);
+                    if (_sr) _sr.flipX = !right;
+                }
+                if (_sr != null)
+                {
+                    transform.localPosition = local;
+                    _sr.sortingOrder = order;
+                }
             }
             if (embersPerSecond > 0f && Random.value < embersPerSecond * Time.deltaTime)
                 FX.PixelFX.Burst((Vector2)transform.position + emberOffset + Random.insideUnitCircle * 0.12f, Vector2.up,

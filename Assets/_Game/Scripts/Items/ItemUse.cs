@@ -31,6 +31,8 @@ namespace Capstone.Items
             if (def.stopsBleeding && ailments != null) ailments.StopBleeding();
             if (def.healAmount > 0f && health != null) health.Heal(def.healAmount);
 
+            FX.SfxBank.Play2D("bandage_use");
+
             // 하나 덜어낸다. 더미가 비면 격자에서 뺀다
             item.Count -= 1;
             if (item.Count <= 0) from.Remove(item);

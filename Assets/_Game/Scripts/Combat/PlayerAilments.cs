@@ -5,7 +5,7 @@ namespace Capstone.Combat
 {
     /// <summary>
     /// 상처와 병 (피드백 - 감염체에게 맞으면 감염 · 출혈).
-    ///   출혈 - 초당 피해가 붕대를 감을 때까지 계속된다
+    ///   출혈 - 초당 피해가 최대 5초 이어진다. 또 베여도 5초를 넘지 않는다. 붕대를 감으면 바로 멎는다
     ///   감염 - 맞을수록 쌓인다(0~100). 쌓인 만큼 걸음과 숨이 무거워지고, 꽉 차면 체력이 서서히 썩는다
     /// 판이 끝나면(씬이 바뀌면) 둘 다 사라진다 - 마을에서 회복한 것으로 친다.
     /// </summary>
@@ -14,6 +14,9 @@ namespace Capstone.Combat
         [Header("출혈")]
         [SerializeField] private float bleedDamagePerSecond = 1.5f;
         [SerializeField] private float bleedTick = 1f;
+        [SerializeField] private float bleedSoundInterval = 1.6f;
+        [Tooltip("출혈이 이어지는 최대 시간 (초). 또 베여도 남은 시간은 이걸 넘지 않는다 (수정사항 2026-11-10)")]
+        [SerializeField] private float maxBleedSeconds = 5f;
 
         [Header("감염")]
         [Tooltip("감염 100% 일 때의 이동속도 배율")]
@@ -27,6 +30,9 @@ namespace Capstone.Combat
         [SerializeField] private Health health;
 
         public bool IsBleeding { get; private set; }
+        /// <summary>출혈이 멎기까지 남은 시간 (초).</summary>
+        public float BleedRemaining => IsBleeding ? Mathf.Max(0f, _bleedUntil - Time.time) : 0f;
+        private float _bleedUntil;
         /// <summary>감염 수치 0~100.</summary>
         public float Infection { get; private set; }
         public bool IsInfected => Infection > 0.5f;
@@ -39,6 +45,7 @@ namespace Capstone.Combat
 
         private float _nextBleedAt;
         private float _nextRotAt;
+        private float _nextBleedSoundAt;
 
         private void Awake()
         {
@@ -49,10 +56,21 @@ namespace Capstone.Combat
         {
             if (health == null || health.IsDead) return;
 
+            if (IsBleeding && Time.time >= _bleedUntil)
+            {
+                IsBleeding = false;                      // 5초가 지나면 저절로 멎는다
+                OnChanged?.Invoke();
+            }
+
             if (IsBleeding && Time.time >= _nextBleedAt)
             {
                 _nextBleedAt = Time.time + bleedTick;
                 health.TakeDamage(bleedDamagePerSecond * bleedTick, Vector2.zero, true);
+            }
+            if (IsBleeding && Time.time >= _nextBleedSoundAt)
+            {
+                _nextBleedSoundAt = Time.time + bleedSoundInterval;
+                FX.SfxBank.Play2D("bleeding", 1f, 0.05f);
             }
 
             if (Infection >= 100f && Time.time >= _nextRotAt)
@@ -71,10 +89,21 @@ namespace Capstone.Combat
                 Infection = Mathf.Min(100f, Infection + infection);
                 changed = true;
             }
-            if (!IsBleeding && bleedChance > 0f && UnityEngine.Random.value < bleedChance)
+            if (bleedChance > 0f && UnityEngine.Random.value < bleedChance)
             {
+                // 이미 피가 나는 중에 또 베이면 남은 시간을 늘리되 최대 시간은 넘기지 않는다
+                if (IsBleeding)
+                {
+                    _bleedUntil = Mathf.Min(Time.time + maxBleedSeconds, _bleedUntil + maxBleedSeconds);
+                    OnChanged?.Invoke();
+                    return;
+                }
                 IsBleeding = true;
+                _bleedUntil = Time.time + maxBleedSeconds;
                 _nextBleedAt = Time.time + bleedTick;
+                FX.SfxBank.Play2D("bleeding_start");     // 시작음이 먼저, 끝나면 뚝뚝 떨어지는 소리
+                var start = FX.SfxBank.Find("bleeding_start");
+                _nextBleedSoundAt = Time.time + (start != null ? start.length : 1f);
                 changed = true;
             }
             if (changed) OnChanged?.Invoke();

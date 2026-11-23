@@ -86,7 +86,8 @@ namespace Capstone.Combat
             }
 
             Core.NoiseSystem.Emit(at, _spec.noise, _owner);
-            FX.SfxBank.Play(_spec.type == DamageType.Light ? "flask_light" : "flask_fire", at, 1f, 0.03f);
+            if (_owner != null && _owner.GetComponent<Player.PlayerController>() != null) FX.SfxBank.PlayOwn("glass_broken", at, 1f, 0.03f);
+            else FX.SfxBank.Play("glass_broken", at, 1f, 0.03f);
             FX.Vfx.Play(_spec.type == DamageType.Light ? "vfx_light_burst" : "vfx_fire_burst", at + Vector2.up * 0.7f, false, 46, 0.75f);
             // 시야 안에서 터졌을 때만 화면이 번쩍인다
             var cam = Camera.main;

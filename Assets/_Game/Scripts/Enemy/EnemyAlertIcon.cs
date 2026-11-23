@@ -58,6 +58,7 @@ namespace Capstone.Enemy
             }
         }
 
+        private static float _exposureReadyAt;
         private SpriteRenderer _icon;
         private float _shownAt;
 
@@ -81,7 +82,12 @@ namespace Capstone.Enemy
             bool show = state != AlertState.Idle;
             if (state != _shown)
             {
-                if (state == AlertState.Alerted) FX.SfxBank.Play("alert", transform.position, 0.6f, 0.04f);
+                // 발각음은 나를 봤을 때만 - 적끼리 싸우기 시작한 것까지 울리면 신호가 무뎌진다. 조원이 줄줄이 봐도 한 번만
+                if (state == AlertState.Alerted && !enemy.FightingFoe && Time.time >= _exposureReadyAt)
+                {
+                    _exposureReadyAt = Time.time + 2f;
+                    FX.SfxBank.Play2D("exposure", 1f);
+                }
                 else if (state == AlertState.Suspicious) FX.SfxBank.Play("suspect", transform.position, 0.45f, 0.04f);
                 _shown = state; _shownAt = Time.time;
             }

@@ -295,8 +295,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Capstone.Enemy.RangedEnemy
   senseMode: 0
   noticeRadius: 3
-  sightConeRange: 10
-  sightConeAngle: 110
+  sightConeRange: 4
+  sightConeAngle: 180
   canHear: 1
   hearingMultiplier: 1
   keepChasingOnceSeen: 0
@@ -305,6 +305,7 @@ MonoBehaviour:
   detectRange: 15
   unlitRangeMultiplier: 0.25
   litAlertRadius: 0
+  weakLightRangeMultiplier: 0.55
   sightBlockMask:
     serializedVersion: 2
     m_Bits: 1024

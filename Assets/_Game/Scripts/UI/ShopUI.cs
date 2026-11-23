@@ -13,6 +13,7 @@ namespace Capstone.UI
     ///   왼쪽  - 창고 격자와 중요 보관함(3x3). 보관함에 넣어 둔 것만 레이드에 들고 들어간다
     ///   오른쪽 - 판매대(끌어다 놓으면 팔린다) · 전부 팔기 · 그 가게가 파는 물건 목록
     /// 창이 열려 있는 동안은 캐릭터가 움직이지 않는다.
+    /// Tab 은 가게 없이 창고와 보관함만 띄운다 (2026-11-04) - 마을에는 가방 화면이 없다.
     /// </summary>
     public class ShopUI : MonoBehaviour
     {
@@ -50,6 +51,10 @@ namespace Capstone.UI
         private float _receiptTimer;
         private readonly List<Button> _rows = new();
         private Player.PlayerController _player;
+        private BuyQuantityDialog _quantity;
+        private bool _storageOnly;
+
+        private bool IsOpen => Current != null || _storageOnly;
 
         private void Awake()
         {
@@ -80,10 +85,20 @@ namespace Capstone.UI
 
         private void Update()
         {
-            if (Current != null)
+            var kb = Keyboard.current;
+            if (kb != null && kb.tabKey.wasPressedThisFrame)
             {
-                var kb = Keyboard.current;
-                if (kb != null && kb.escapeKey.wasPressedThisFrame) Close();
+                if (_storageOnly) Close();
+                else if (Current == null) OpenStorage();
+            }
+
+            if (IsOpen)
+            {
+                if (kb != null && kb.escapeKey.wasPressedThisFrame)
+                {
+                    if (_quantity != null && _quantity.IsOpen) _quantity.Hide();    // 수량창만 닫는다
+                    else Close();
+                }
             }
 
             if (_receiptTimer <= 0f) return;
@@ -96,24 +111,56 @@ namespace Capstone.UI
         {
             if (shop == null) return;
             Current = shop;
-            if (window != null) window.SetActive(true);
-            if (titleText != null) titleText.text = shop.ShopName;
-            if (greetingText != null) greetingText.text = shop.Greeting;
-
-            if (stashPanel != null) stashPanel.Bind(GameSession.Stash, "창고");
-            if (securePanel != null) securePanel.Bind(GameSession.Secure, "중요 보관함");
+            ShowWindow(shop.ShopName, shop.Greeting, true);
             BuildBuyList(shop);
             Refresh();
+        }
+
+        /// <summary>가게 없이 창고와 보관함만 연다. 사고파는 칸은 감춘다.</summary>
+        private void OpenStorage()
+        {
+            if (_player == null) _player = FindFirstObjectByType<Player.PlayerController>();
+            if (_player == null || !_player.enabled) return;     // 다른 창이 캐릭터를 잡고 있으면 열지 않는다
+            var gate = FindFirstObjectByType<Town.RaidGate>();
+            if (gate != null && gate.PopupShown) return;         // 레이드 이동을 묻는 중이면 열지 않는다
+            _storageOnly = true;
+            ShowWindow("창고", "[Alt+좌클릭] 창고와 보관함 사이로 바로 옮기기   ·   [Tab] 닫기", false);
+            Refresh();
+        }
+
+        private void ShowWindow(string title, string greeting, bool trade)
+        {
+            if (trade) _storageOnly = false;
+            if (window != null) window.SetActive(true);
+            if (titleText != null) titleText.text = title;
+            if (greetingText != null) greetingText.text = greeting;
+            SetTradeVisible(trade);
+
+            if (stashPanel != null) stashPanel.QuickTarget = securePanel;
+            if (securePanel != null) securePanel.QuickTarget = stashPanel;
+            if (stashPanel != null) stashPanel.Bind(GameSession.Stash, "창고");
+            if (securePanel != null) securePanel.Bind(GameSession.Secure, "중요 보관함");
 
             LockPlayer(true);
             Cursor.visible = true;
         }
 
+        private void SetTradeVisible(bool on)
+        {
+            if (sellZone != null) sellZone.gameObject.SetActive(on);
+            if (sellAllButton != null) sellAllButton.gameObject.SetActive(on);
+            if (buyList != null) buyList.gameObject.SetActive(on);
+            var buyTitle = window != null ? window.transform.Find("BuyTitle") : null;
+            if (buyTitle != null) buyTitle.gameObject.SetActive(on);
+        }
+
         public void Close()
         {
-            if (Current == null) return;
+            if (!IsOpen) return;
             if (ItemDrag.IsDragging) return;          // 끌던 블록이 화면에 남지 않도록 손을 뗄 때까지 기다린다
             Current = null;
+            _storageOnly = false;
+            if (_quantity != null) _quantity.Hide();
             if (stashPanel != null) stashPanel.Unbind();
             if (securePanel != null) securePanel.Unbind();
             ItemTooltip.Hide();
@@ -154,6 +201,7 @@ namespace Capstone.UI
 
                 var captured = def;
                 row.onClick.AddListener(() => TryBuy(captured, price));
+                row.onClick.AddListener(FX.SfxBank.Click);
                 _rows.Add(row);
             }
         }
@@ -161,8 +209,22 @@ namespace Capstone.UI
         private void TryBuy(Items.ItemDefinition def, int price)
         {
             if (GameSession.Gold < price) { Say($"돈이 모자란다.  ({price:N0} G)"); return; }
-            if (!GameSession.Buy(def, price)) { Say("창고에 자리가 없다."); return; }
-            Say($"{Object(def.displayName)} 샀다.   <color=#E8C46A>-{price:N0} G</color>");
+            int max = GameSession.MaxBuyable(def, price);
+            if (max <= 0) { Say("창고에 자리가 없다."); return; }
+
+            if (_quantity == null)
+            {
+                _quantity = QuickBarUI.NewRect("BuyQuantity", window.transform).gameObject.AddComponent<BuyQuantityDialog>();
+                _quantity.Build(titleText != null ? titleText.font : null);
+            }
+            _quantity.Show(def, price, max, count => FinishBuy(def, price, count));
+        }
+
+        private void FinishBuy(Items.ItemDefinition def, int price, int count)
+        {
+            int bought = GameSession.Buy(def, price, count);
+            if (bought <= 0) { Say("살 수 없다."); return; }
+            Say($"{def.displayName} {bought}개를 샀다.   <color=#E8C46A>-{price * bought:N0} G</color>");
         }
 
         // ---------- 판매 ----------
@@ -174,7 +236,7 @@ namespace Capstone.UI
 
         private void SellEverything()
         {
-            int count = GameSession.Stash.Items.Count;
+            int count = KindCount();
             if (count == 0) { Say("팔 것이 없다."); return; }
 
             int total = GameSession.SellAll(GameSession.Stash);
@@ -193,6 +255,14 @@ namespace Capstone.UI
             return word + (((last - 0xAC00) % 28) == 0 ? "를" : "을");
         }
 
+        /// <summary>창고에 있는 물건 종류 수. 같은 물건이 여러 칸에 나뉘어 있어도 한 종이다.</summary>
+        private static int KindCount()
+        {
+            var kinds = new HashSet<Items.ItemDefinition>();
+            foreach (var it in GameSession.Stash.Items) kinds.Add(it.Def);
+            return kinds.Count;
+        }
+
         private void Say(string line)
         {
             if (receiptText == null) return;
@@ -204,7 +274,7 @@ namespace Capstone.UI
         {
             if (stashValueText != null)
             {
-                int count = GameSession.Stash.Items.Count;
+                int count = KindCount();
                 stashValueText.text = count == 0
                     ? "창고가 비었다"
                     : $"창고 {count}종 · 값어치 {GameSession.ValueOf(GameSession.Stash):N0} G";

@@ -29,6 +29,24 @@ namespace Capstone.Dev
         private const float LootMinutes = 7f;          // 이만큼 뒤졌으면 탈출로 돌아선다 (게임 시간)
         private const float RaidTimeoutMinutes = 19f;
 
+        // 촬영 모드 (2026-11-03, 사운드 검증) - 타이틀부터 실제 버튼을 눌러 한 판을 돌고, 소리가 나는 행동을 빠짐없이 한 번씩 한다
+        private bool _showcase, _endInDeath;
+        private int _forcedGrades;
+        private readonly List<(float at, System.Action act)> _cues = new();
+        private int _cue;
+        private bool _holdDark, _sprintHome, _hasDarkSpot;
+        private Vector2 _darkSpot;
+        private float _scroll, _bushUntil, _bushWaitUntil;
+        private Map.HideBush _bush;
+
+        public void ConfigureShowcase(bool endInDeath)
+        {
+            _showcase = true; _endInDeath = endInDeath;
+            _runsTotal = 1; _timeScale = 1f;
+        }
+
+        private float LootLimitSeconds => _showcase ? 170f : LootMinutes * 60f;
+
         public void Configure(int runs, float timeScale, string raidScene)
         {
             _runsTotal = Mathf.Max(1, runs);
@@ -60,7 +78,7 @@ namespace Capstone.Dev
         private bool _mouseLeft;
 
         // ---------- 장면 ----------
-        private enum Mode { Wait, Town, Raid, Done }
+        private enum Mode { Wait, Title, Town, Raid, Done }
         private Mode _mode = Mode.Wait;
         private float _sceneTime;
 
@@ -99,6 +117,7 @@ namespace Capstone.Dev
             // 레이드 씬은 Raid 로 시작하는 이름 (Raid, Raid_Map1)
             if (to.name.StartsWith("Raid")) { _mode = Mode.Raid; BeginRaid(to.name); }
             else if (to.name == "Town") { _mode = Mode.Town; _townStep = 0; }
+            else if (to.name == "Intro" && _showcase) _mode = Mode.Title;
             else _mode = Mode.Wait;
             Event("scene", $"\"name\":\"{to.name}\"");
         }
@@ -114,6 +133,11 @@ namespace Capstone.Dev
 
             if (_mode == Mode.Raid) TickRaid();
             else if (_mode == Mode.Town) TickTown();
+            else if (_mode == Mode.Title && _sceneTime > 4f)
+            {
+                _mode = Mode.Wait;
+                ReadField<UnityEngine.UI.Button>(FindFirstObjectByType<UI.TitleMenu>(), "startButton").onClick.Invoke();
+            }
             FlushInput();
         }
 
@@ -130,7 +154,12 @@ namespace Capstone.Dev
                 case 0:
                     Capture("town_arrive");
                     Event("town", $"\"gold\":{Core.GameSession.Gold},\"stash\":{Core.GameSession.Stash.Items.Count}");
-                    if (_run >= _runsTotal) { Finish(); return; }
+                    if (_run >= _runsTotal)
+                    {
+                        // 촬영은 결과 음악이 끝나고 마을 곡이 다시 올라오는 것까지 찍는다
+                        if (_showcase && _sceneTime < 16f) return;
+                        Finish(); return;
+                    }
                     _townStep = 1; _townStepAt = Time.time;
                     // 가게 창을 한 번 열어 겹침을 본다 (첫 방문만)
                     if (_run > 0) _townStep = 3;
@@ -146,11 +175,12 @@ namespace Capstone.Dev
                     break;
                 }
                 case 2:   // 가게 창 캡처 후 닫기
-                    if (Time.time - _townStepAt > 1.2f)
+                    if (Time.time - _townStepAt > (_showcase ? 2.5f : 1.2f))
                     {
                         Capture("town_shop");
                         Event("shop", $"\"open\":{(UI.ShopUI.Current != null ? "true" : "false")}");
-                        _tap.Add(Key.Escape);
+                        var close = _showcase && UI.ShopUI.Current != null ? ReadField<UnityEngine.UI.Button>(UI.ShopUI.Current, "closeButton") : null;
+                        if (close != null) close.onClick.Invoke(); else _tap.Add(Key.Escape);
                         _townStep = 3; _townStepAt = Time.time;
                     }
                     break;
@@ -179,7 +209,7 @@ namespace Capstone.Dev
                     break;
                 }
                 case 5:
-                    if (Time.time - _townStepAt > 0.6f)
+                    if (Time.time - _townStepAt > (_showcase ? 1.6f : 0.6f))
                     {
                         var gate = FindFirstObjectByType<Town.RaidGate>();
                         var tm = FindFirstObjectByType<Core.TownManager>();
@@ -187,7 +217,8 @@ namespace Capstone.Dev
                         Event("depart", $"\"townTarget\":\"{target}\",\"botTarget\":\"{_raidScene}\"");
                         // 시험하려는 맵과 마을 출구가 다르면 출구 설정을 따르지 않고 시험할 맵으로 보낸다 - 다른 점은 기록에 남는다
                         if (target != _raidScene && tm) WriteField(tm, "raidSceneName", _raidScene);
-                        gate.Accept();
+                        var yes = _showcase ? ReadField<UnityEngine.UI.Button>(gate, "yesButton") : null;
+                        if (yes != null) yes.onClick.Invoke(); else gate.Accept();
                         _townStep = 6;
                     }
                     break;
@@ -252,6 +283,7 @@ namespace Capstone.Dev
                 if (h) { var name = e.name; h.OnDeath += () => { if (_stats != null) { _stats.kills++; Event("kill", $"\"enemy\":\"{Clean(name)}\""); } }; }
             }
             _lastPos = _pc.transform.position;
+            if (_showcase) SetupCues();
             Event("raid_begin", $"\"run\":{_run},\"containers\":{FindObjectsByType<Items.LootContainer>(FindObjectsSortMode.None).Length},\"enemies\":{FindObjectsByType<Enemy.EnemyAI>(FindObjectsSortMode.None).Length},\"exit\":{V(_exit ? (Vector2)_exit.transform.position : Vector2.zero)}");
             Capture("raid_start");
             return true;
@@ -282,7 +314,7 @@ namespace Capstone.Dev
             {
                 if (!_ended) EndRaid(_raid.IsDead ? "death" : "extract");
                 ReleaseAll();
-                if (_raid.IsDead && Time.time - _endAt > 1.5f * _timeScale) _tap.Add(Key.R);
+                if (_raid.IsDead && Time.time - _endAt > (_showcase ? 8f : 1.5f * _timeScale)) _tap.Add(Key.R);
                 return;
             }
             float elapsed = Time.time - _stats.start;
@@ -291,11 +323,14 @@ namespace Capstone.Dev
             if (Time.time > _nextPeriodicShot) { _nextPeriodicShot = Time.time + 60f; Capture("raid_t" + Mathf.RoundToInt(elapsed)); }
             if (!_lowShot && _hp && _hp.Normalized < 0.35f) { _lowShot = true; Capture("lowhp"); }
 
+            if (_showcase) TickCues(elapsed);
+
             // --- 등불은 켜 둔다 (어두우면 뒤질 수 없다) ---
-            if (_torch && !_torch.IsLit && !_torch.IsEmpty && Every(ref _torchAt, 1f)) _tap.Add(Key.E);
+            if (!_holdDark && _torch && !_torch.IsLit && !_torch.IsEmpty && Every(ref _torchAt, 1f)) _tap.Add(Key.E);
 
             // --- 붕대 ---
-            if (_ail && _hp && (_ail.IsBleeding || _hp.Normalized < 0.5f) && Every(ref _healAt, 6f))
+            bool bandageTime = !_showcase || elapsed > 60f || _hp.Normalized < 0.35f;   // 촬영은 피 흐르는 소리를 들려준 뒤에 감는다
+            if (bandageTime && _ail && _hp && (_ail.IsBleeding || _hp.Normalized < 0.5f) && Every(ref _healAt, 6f))
             { _tap.Add(Key.H); _stats.heals++; Event("heal", $"\"hp\":{F(_hp.Current)},\"bleed\":{(_ail.IsBleeding ? "true" : "false")}"); }
 
             // --- 싸움 ---
@@ -304,13 +339,40 @@ namespace Capstone.Dev
             // --- 뒤지는 중 ---
             if (_looting != null) { TickLoot(); return; }
 
+            // --- 촬영: 어둠 구간엔 등불 빛이 닿지 않는 곳으로 간다 (고정 광원 안이면 어둠 시간이 안 쌓인다) ---
+            if (_holdDark)
+            {
+                if (!_hasDarkSpot || Map.FixedLightZone.IsLit(_darkSpot))
+                {
+                    for (int i = 0; i < 40 && !_hasDarkSpot; i++)
+                    {
+                        Vector2 p = pos + Random.insideUnitCircle * 18f;
+                        if (!Map.FixedLightZone.IsLit(p) && !Physics2D.OverlapCircle(p, 1f, _wallMask)) { _darkSpot = p; _hasDarkSpot = true; }
+                    }
+                }
+                if (_hasDarkSpot) { MoveTo(_pc, _darkSpot, 0.5f, false); return; }
+            }
+
+            // --- 촬영: 덤불을 지나간다 ---
+            if (_bush != null)
+            {
+                if (Time.time > _bushUntil) { _bush = null; _path.Clear(); }
+                else if (MoveTo(_pc, _bush.transform.position, 0.5f, false))
+                {
+                    if (_bushWaitUntil <= 0f) _bushWaitUntil = Time.time + 1.2f;
+                    if (Time.time > _bushWaitUntil) { _bush = null; _path.Clear(); }
+                }
+                return;
+            }
+
             // --- 목표 고르기 ---
-            bool goHome = elapsed > LootMinutes * 60f || (_inv && _inv.MaxWeight > 0f && _inv.CurrentWeight > _inv.MaxWeight * 0.8f)
+            bool goHome = elapsed > LootLimitSeconds || (_inv && _inv.MaxWeight > 0f && _inv.CurrentWeight > _inv.MaxWeight * 0.8f)
                        || (_hp && _hp.Normalized < 0.4f);
             if ((goHome || _noMoreLoot) && _exit)
             {
-                if (_goal != (Object)_exit) { _goal = _exit; _path.Clear(); Event("goal", $"\"what\":\"extract\",\"why\":\"{(_noMoreLoot ? "no_more_loot" : elapsed > LootMinutes * 60f ? "time" : _hp.Normalized < 0.4f ? "hp" : "weight")}\""); }
+                if (_goal != (Object)_exit) { _goal = _exit; _path.Clear(); Event("goal", $"\"what\":\"extract\",\"why\":\"{(_noMoreLoot ? "no_more_loot" : elapsed > LootLimitSeconds ? "time" : _hp.Normalized < 0.4f ? "hp" : "weight")}\""); }
                 MoveTo(_pc, _exit.transform.position, 0.2f, false);
+                if (_showcase) { if (_sprintHome) _held.Add(Key.LeftShift); }
                 return;
             }
 
@@ -326,10 +388,71 @@ namespace Capstone.Dev
                 if (!inReach && _interactor && _interactor.Current != null && _interactor.CandidateCount > 1) { if (Every(ref _cycleAt, 0.3f)) _tap.Add(Key.Q); return; }
                 if (_goal is Items.LootContainer box)
                 {
+                    if (_holdDark) return;      // 촬영: 어둠 구간엔 뒤지지 않는다
+                    if (_showcase) ForceGrade(box);
                     _looting = box; _lootStart = Time.time; _tap.Add(Key.F);
                 }
                 else { _tap.Add(Key.F); _blacklist.Add(_goal); _goal = null; }
             }
+        }
+
+        // ============================ 촬영 큐 ============================
+        /// <summary>시간표대로 소리 나는 행동을 한 번씩. 키 입력은 진짜로 넣는다.</summary>
+        private void SetupCues()
+        {
+            _cues.Clear(); _cue = 0; _forcedGrades = 0; _sprintHome = true;
+            var quick = _pc.GetComponent<Player.QuickUse>();
+            var bandage = quick ? ReadField<Items.ItemDefinition>(quick, "bandage") : null;
+            if (bandage != null && _inv != null) _inv.TryAdd(bandage, 2);
+
+            void At(float t, System.Action a) => _cues.Add((t, a));
+            At(1f, () => { if (!_torch.IsLit) _tap.Add(Key.E); });
+            At(3f, () => _tap.Add(Key.Tab));
+            At(4.6f, () => _tap.Add(Key.Tab));
+            At(6.5f, () => _scroll = -120f);
+            At(8f, () => _scroll = 120f);
+            At(10f, () => { _holdDark = true; _tap.Add(Key.E); });     // 15초 넘게 어둠 속을 걸어 마녀 속삭임까지
+            foreach (var t in new[] { 13f, 16f, 19f, 22f }) At(t, () => _tap.Add(Key.Space));   // 구르기 소리가 둘이라 몇 번 구른다
+            At(33f, () => _tap.Add(Key.G));
+            At(36f, () => _held.Add(Key.LeftShift));
+            At(40f, () => _held.Remove(Key.LeftShift));
+            At(44f, () => { if (!_ail.IsBleeding) _ail.Wound(0f, 1f); });    // 맞아서 피가 안 났으면 직접 건다 - 소리는 Wound 경로 그대로
+            At(62f, () =>
+            {
+                float best = float.MaxValue;
+                foreach (var b in FindObjectsByType<Map.HideBush>(FindObjectsSortMode.None))
+                {
+                    float d = Vector2.Distance(_pc.transform.position, b.transform.position);
+                    if (d < best) { best = d; _bush = b; }
+                }
+                _bushUntil = Time.time + 25f; _bushWaitUntil = 0f; _path.Clear();
+            });
+            if (_endInDeath)
+            {
+                foreach (var t in new[] { 72f, 74f, 76f, 78f, 80f, 82f }) At(t, () => _hp.TakeDamage(10f, Vector2.right, Combat.DamageType.Physical, null));
+                At(84f, () => _hp.TakeDamage(_hp.Max, Vector2.left, Combat.DamageType.Physical, null));
+            }
+        }
+
+        private void TickCues(float elapsed)
+        {
+            while (_cue < _cues.Count && elapsed >= _cues[_cue].at) _cues[_cue++].act();
+            // 탈출 촬영은 끝까지 간다 - 봇은 도적 무리에 금방 죽는다. 맞는 소리는 그대로 나고 체력만 채운다
+            if (!_endInDeath && _hp.Current < 35f) _hp.Heal(50f);
+            // 어둠 구간 - 속삭임이 6초 들릴 때까지 (고정 광원 안이면 시간이 안 쌓이니 70초에 포기)
+            if (_holdDark)
+            {
+                var dark = _pc.GetComponent<Player.DarknessPenalty>();
+                if ((dark != null && dark.DarkTime > 21f) || elapsed > 70f) { _holdDark = false; _tap.Add(Key.E); }
+            }
+        }
+
+        /// <summary>한 번에 네 등급 소리를 다 들으려고, 처음 뒤지는 상자 넷의 등급을 하나씩 정한다 (전설은 3% 라 안 나온다).</summary>
+        private void ForceGrade(Items.LootContainer box)
+        {
+            if (box.IsGenerated || _forcedGrades >= 4) return;
+            var g = (Core.ItemGrade)(3 - _forcedGrades++);
+            WriteField(box, "gradeTable", new[] { new Items.LootContainer.GradeRoll { grade = g, weight = 1f } });
         }
 
         // --- 상자 ---
@@ -425,7 +548,7 @@ namespace Capstone.Dev
             AimAt(aim);
             // 1단(0.5초) 차징 후 놓는다 - 사람이 가장 많이 쓰는 박자
             if (!_charging && _xbow.IsLoaded && !_xbow.IsReloading) { _mouseLeft = true; _charging = true; _chargeAt = Time.time; }
-            else if (_charging && Time.time - _chargeAt > 0.6f) { _mouseLeft = false; _charging = false; _stats.shots++; }
+            else if (_charging && Time.time - _chargeAt > (_showcase && _stats.shots % 2 == 0 ? 1.4f : 0.6f)) { _mouseLeft = false; _charging = false; _stats.shots++; }   // 촬영은 풀차징도 섞는다
             return true;
         }
 
@@ -459,12 +582,15 @@ namespace Capstone.Dev
         private float _repathAt, _stuckCheckAt;
         private Vector2 _stuckFrom;
         private int _stuckStreak;
+        private Vector2 _unstickDir;
+        private float _unstickUntil;
 
         /// <summary>목표까지 걷는다. 도착하면 true.</summary>
         private bool MoveTo(Player.PlayerController pc, Vector2 goal, float arrive, bool wallMaskOnly)
         {
             Vector2 pos = pc.transform.position;
             if (Vector2.Distance(pos, goal) <= arrive) { ReleaseMove(); return true; }
+            if (Time.time < _unstickUntil) { SetMove(_unstickDir); return false; }
 
             if (_path.Count == 0 || (goal - _pathGoal).sqrMagnitude > 1f || Time.time > _repathAt)
             {
@@ -490,6 +616,8 @@ namespace Capstone.Dev
                     Event("stuck", $"\"pos\":{V(pos)},\"goal\":{V(goal)},\"streak\":{_stuckStreak}");
                     if (_stuckStreak == 1) Capture("stuck");
                     _path.Clear();
+                    // 벽에 발이 붙으면 길찾기 시작 칸이 벽 너머로 잡혀 같은 벽을 계속 민다 - 밀던 반대쪽으로 빠져나온 뒤 다시 잡는다
+                    if (_stuckStreak >= 2) { _unstickDir = Quaternion.Euler(0f, 0f, Random.Range(120f, 240f)) * dir.normalized; _unstickUntil = Time.time + 0.9f; }
                     if (_stuckStreak >= 3 && _goal != null && _goal != (Object)_exit) { _blacklist.Add(_goal); _goal = null; _stuckStreak = 0; }
                 }
                 else _stuckStreak = 0;
@@ -526,7 +654,8 @@ namespace Capstone.Dev
             }
             if (Mouse.current != null)
             {
-                var ms = new MouseState { position = _mouseScreen };
+                var ms = new MouseState { position = _mouseScreen, scroll = new Vector2(0f, _scroll) };
+                _scroll = 0f;
                 if (_mouseLeft) ms = ms.WithButton(MouseButton.Left);
                 InputSystem.QueueStateEvent(Mouse.current, ms);
             }
@@ -541,6 +670,7 @@ namespace Capstone.Dev
             _summary.AppendLine($"마지막 소지금 {Core.GameSession.Gold} G").AppendLine().AppendLine($"캡처 {_shot}장 · 자세한 기록은 events.jsonl");
             File.WriteAllText(Path.Combine(_dir, "summary.md"), _summary.ToString(), new UTF8Encoding(false));
             Debug.Log("[PlaytestBot] 끝 - " + _dir + "\n" + _summary);
+            GameplayRecorder.Stop();
             UnityEditor.EditorApplication.isPlaying = false;
         }
 
